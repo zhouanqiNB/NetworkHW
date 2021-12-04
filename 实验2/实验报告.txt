@@ -1,0 +1,120 @@
+# 计算机网络第二次实验作业
+
+> 1911590 周安琪
+
+## 1 搭建Web服务器
+
+这里使用的是Python自带的httpserver，使用方便，轻量级。
+
+## 2 制作简单的Web页面
+
+效果图：
+
+![image-20211109230203860](C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C2/image-20211109230203860.png)
+
+代码如下，这个html文件包含了一些文字信息和一张图片，也设置了标签页图标。
+
+```html
+<!doctype html>
+<html>
+	<head>
+		<meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width initial-scale=1'>
+		<title>index</title>
+		<link rel="shortcut icon" href="logo.ico" type="logo" />
+	</head>
+	<body>
+		<center>
+			<br><br><br>
+			<p><img src="a.jpg" alt="a" style="zoom: 50%;" /></p>
+			<p><strong>专业：</strong>计算机科学与技术</p>
+			<p><strong>姓名：</strong>周安琪    
+                <strong>学号：</strong>1911590</p>
+		</center>
+	</body>
+</html>
+```
+
+## 3 浏览器获取自己编写的Web页面
+
+首先在控制台cd到html文件所在的文件夹，然后使用下述指令打开服务（其中8044指的是监听端口，默认值是8000，这里只是为了表达得更清楚）。
+
+```
+cd C:/Users/16834/Desktop/计算机网络作业/实验2/html文件
+python -m http.server 8044
+```
+
+![image-20211109231654740](C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C2/image-20211109231654740.png)
+
+在浏览器键入：
+
+```
+127.0.0.1:8044
+```
+
+就可以看到网页
+
+![image-20211109231734299](C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C2/image-20211109231734299.png)
+
+同时控制台也输出了一些信息，可以看到是用GET方法获取了两个图片，HTTP的版本是1.1，HTTP返回代码是200，意思是成功。
+
+![image-20211109231758438](C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C2/image-20211109231758438.png)
+
+## 4 用Wireshark捕获浏览器与Web交互
+
+打开Wireshark，选择`Adapter for loopback traffic capture`，浏览器请求完网页之后，用`tcp.port==8044`进行筛选（8044是服务器监听的端口号）
+
+![image-20211110000822850](C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C2/image-20211110000822850.png)
+
+可以看到在浏览器与服务器的交互中，浏览器的端口号是1144。
+
+一共有3种颜色的报文，其中灰色的代表TCP连接的起始和关闭；黄绿色的代表HTTP协议；蓝色的代表TCP协议。
+
+### 4.1 HTTP协议
+
+图中的6条记录分别是
+
+```
+GET / HTTP/1.1 
+HTTP/1.0 200 OK  (text/html)
+GET /a.jpg HTTP/1.1 
+HTTP/1.0 200 OK  (JPEG JFIF image)
+GET /logo.ico HTTP/1.1 
+HTTP/1.0 200 OK  (image/x-icon)
+```
+
+分别是：
+
+- 请求文本，响应
+- 请求图片，响应
+- 请求icon，响应
+
+### 4.2 TCP三次握手
+
+首先观察前三条记录：
+
+![image-20211110002730814](C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C2/image-20211110002730814.png)
+
+SYN是指同步序列编号，是TCP/IP建立连接时使用的握手信号。
+
+在client和server之间建立TCP连接时，客户机首先发出一个SYN消息，服务器使用SYN+ACK应答表示接收到了这个消息，最后客户机再以ACK消息响应。
+
+### 4.3 TCP传输
+
+在一次HTTP请求之间：
+
+![image-20211110003537388](C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C2/image-20211110003537388.png)
+
+PSH指的是不用等待其他包了，自己就可以单独发送。带有psh ack的是数据发送的包，传输的就是请求的数据。
+
+### 4.3 TCP四次挥手
+
+![image-20211110003734305](C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C2/image-20211110003734305.png)
+
+FIN ACK指的是数据已经传完了，可以断开连接。
+
+首先服务器端口告知客户端口自己结束传输，客户端端口回复ACK表示收到；然后客户端口告知服务器端口自己结束传输，服务器端口回复ACK表示收到。
+
+### 4.4 总结
+
+![2](C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C2/2.png)
