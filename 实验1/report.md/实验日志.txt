@@ -1,0 +1,352 @@
+> 没啥好看的，只是舍不得删掉
+
+- 信息本身中文字符采用Unicode编码。
+
+- 头包含发送信息一方的ip地址和发送的时间戳。
+
+- 包含数据的长度
+
+  四字节的int类型来表示数据的大小
+
+分为4段，
+
+- 第一段是一个4个字节的整数，代表后面三段的总和
+- 第二段是3、4的长度
+- 时间戳
+- 数据本身
+
+# Linux下socket hello world
+
+因为在读的教程给了例子，而且是cpp的，所以先在ubuntu安装c++环境
+
+这就是成功了：
+
+![image-20211019204616121](./image-20211019204616121.png)
+
+http://c.biancheng.net/view/2128.html
+
+哇哦！这里的程序实现了耶！
+
+好神奇哦！
+
+这里要开两个终端，先开server然后开client。
+
+server开了之后就会等待（也就是无输出）
+
+client开了之后就会输出
+
+![image-20211019210040609](./image-20211019210040609.png)
+
+然后server就自己关闭了。
+
+![image-20211019210116046](./image-20211019210116046.png)
+
+下面让我们一起分析代码吧.
+
+server:
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+int main(){
+    //创建一个socket，
+    /*
+     * 1. af地址类型是AF_INET，意思是仅仅是IPv4系列，与之相对的
+     *    是AF_INET6，意思是包括IPv6
+     * 2. type服务类型是SOCK_STREAM
+     * 3. 协议是TCP
+     */
+    int serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    
+    
+    //将套接字和IP、端口绑定。
+    //sockaddr_in 是internet环境下套接字的地址形式。
+    struct sockaddr_in serv_addr;
+    //每个字节都用0填充
+    memset(&serv_addr, 0, sizeof(serv_addr));  
+    //使用IPv4地址
+    serv_addr.sin_family = AF_INET;  
+    //具体的IP地址，也就是本机地址
+    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
+    //简单地说,htons()就是将一个数的高低位互换
+　　 //(如:12 34 --> 34 12) 大小端的事
+    serv_addr.sin_port = htons(1234);  //端口是1234
+    
+    //将一个本地地址绑定到指定的Socket
+    bind(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    //进入监听状态，等待用户发起请求
+    listen(serv_sock, 20);
+    
+    
+    //接收客户端请求
+    struct sockaddr_in clnt_addr;
+    socklen_t clnt_addr_size = sizeof(clnt_addr);
+    
+    //接受一个特定socket请求等待队列中的连接请求
+    int clnt_sock = accept(serv_sock, (struct sockaddr*)&clnt_addr, &clnt_addr_size);
+    
+    //向客户端发送数据
+    char str[] = "hello world!";
+    //向套接字文件中写入数据，也就是向客户端发送数据。
+    write(clnt_sock, str, sizeof(str));
+   
+    //关闭套接字
+    close(clnt_sock);
+    close(serv_sock);
+    return 0;
+}
+```
+
+client
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+int main(){
+    
+    //创建套接字
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    
+    //向服务器（特定的IP和端口）发起请求
+    struct sockaddr_in serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));  //每个字节都用0填充
+    serv_addr.sin_family = AF_INET;  //使用IPv4地址
+    serv_addr.sin_addr.s_addr = inet_addr("172.28.54.120");  //具体的IP地址
+    serv_addr.sin_port = htons(1234);  //端口
+    //把sock和远端服务器的地址连接
+    connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+   
+    //读取服务器传回的数据
+    char buffer[40];
+    read(sock, buffer, sizeof(buffer)-1);
+   
+    printf("Message form server: %s\n", buffer);
+   
+    //关闭套接字
+    close(sock);
+    return 0;
+}
+```
+
+# ubuntu查看本机ip
+
+https://blog.csdn.net/zhangvalue/article/details/80270169
+
+# Windows下的socket
+
+server
+
+```c
+#include <stdio.h>
+#include <winsock2.h>
+#pragma comment (lib, "ws2_32.lib")  //加载 ws2_32.dll
+int main(){
+    //初始化 DLL
+    WSADATA wsaData;
+    WSAStartup( MAKEWORD(2, 2), &wsaData);
+    //创建套接字
+    SOCKET servSock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    //绑定套接字
+    struct sockaddr_in sockAddr;
+    memset(&sockAddr, 0, sizeof(sockAddr));  //每个字节都用0填充
+    sockAddr.sin_family = PF_INET;  //使用IPv4地址
+    sockAddr.sin_addr.s_addr = inet_addr("127.0.0.1");  //具体的IP地址
+    sockAddr.sin_port = htons(1234);  //端口
+    bind(servSock, (SOCKADDR*)&sockAddr, sizeof(SOCKADDR));
+    //进入监听状态
+    listen(servSock, 20);
+    //接收客户端请求
+    SOCKADDR clntAddr;
+    int nSize = sizeof(SOCKADDR);
+    SOCKET clntSock = accept(servSock, (SOCKADDR*)&clntAddr, &nSize);
+    //向客户端发送数据
+    char *str = "Hello World!";
+    send(clntSock, str, strlen(str)+sizeof(char), NULL);
+    //关闭套接字
+    closesocket(clntSock);
+    closesocket(servSock);
+    //终止 DLL 的使用
+    WSACleanup();
+    return 0;
+}
+```
+
+client
+
+```c
+#include <stdio.h>
+
+#include <stdlib.h>
+
+#include <WinSock2.h>
+
+#pragma comment(lib, "ws2_32.lib")  //加载 ws2_32.dll
+
+int main(){
+
+    //初始化DLL
+
+    WSADATA wsaData;
+
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+    //创建套接字
+
+    SOCKET sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    //向服务器发起请求
+
+    struct sockaddr_in sockAddr;
+
+    memset(&sockAddr, 0, sizeof(sockAddr));  //每个字节都用0填充
+
+    sockAddr.sin_family = PF_INET;
+
+    sockAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    sockAddr.sin_port = htons(1234);
+
+    connect(sock, (SOCKADDR*)&sockAddr, sizeof(SOCKADDR));
+
+    //接收服务器传回的数据
+
+    char szBuffer[MAXBYTE] = {0};
+
+    recv(sock, szBuffer, MAXBYTE, NULL);
+
+    //输出接收到的数据
+
+    printf("Message form server: %s\n", szBuffer);
+
+    //关闭套接字
+
+    closesocket(sock);
+
+    //终止使用 DLL
+
+    WSACleanup();
+
+    system("pause");
+
+    return 0;
+
+}
+```
+
+结果：
+
+![image-20211020011426914](./image-20211020011426914.png)
+
+编译出现的问题
+
+我在cmd用了这个指令：
+
+```
+g++ client.cpp -o client
+```
+
+报错
+
+![image-20211020011512317](./image-20211020011512317.png)
+
+解决：
+
+https://stackoverflow.com/questions/34384803/c-undefined-reference-to-wsastartup8
+
+```
+g++ server.cpp timeStamp.cpp -o server -lws2_32
+g++ client.cpp timeStamp.cpp -o client -lws2_32
+```
+
+反正就是本机可以跑别的地方跑不了
+
+# 把控制台改成UTF8
+
+https://blog.csdn.net/tfs411082561/article/details/78416569
+
+# VS报错
+
+```
+C4996	'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings	client	C:\Users\16834\source\repos\client\client\client.cpp	17	
+```
+
+https://blog.51cto.com/AIXhao/2761808
+
+# interesting pros
+
+多人聊天室
+
+https://www.youtube.com/watch?v=3FvHW3uzZA0
+
+服务器client
+
+https://www.youtube.com/watch?v=IydkqseK6oQ
+
+# 一些bug
+
+仅仅是
+
+```c
+isExit=true(shoule have been false)
+```
+
+我研究到脱发。。。
+
+# 彩色控制台
+
+https://www.gushiciku.cn/pl/gb0E/zh-hk
+
+```c++
+//绿色
+	cout << "\033[32m\033[1m" << "Hello World!"  << "\033[0m" << endl;
+    cout << "\033[32m" << "Hello World!"  << "\033[0m" << endl;
+
+
+//蓝色
+    cout << "\033[34m\033[1m" << "Hello World!"  << "\033[0m" << endl;
+    cout << "\033[34m" << "Hello World!"  << "\033[0m" << endl;
+```
+
+效果：
+
+![image-20211021003012449](./image-20211021003012449.png)
+
+# 关于获取时间戳
+
+有用的代码
+
+```c++
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
+int main(void)
+{
+	struct tm t;   //tm结构指针
+	time_t now;  //声明time_t类型变量
+	time(&now);      //获取系统日期和时间
+	localtime_s(&t, &now);   //获取当地日期和时间
+
+	   //格式化输出本地时间
+	printf("年：%d\n", t.tm_year + 1900);
+	printf("月：%d\n", t.tm_mon + 1);
+	printf("日：%d\n", t.tm_mday);
+	printf("周：%d\n", t.tm_wday);
+	printf("时：%d\n", t.tm_hour);
+	printf("分：%d\n", t.tm_min);
+	printf("秒：%d\n", t.tm_sec);
+	return 0;
+
+}
+```
+
+# ANSI转义序列
