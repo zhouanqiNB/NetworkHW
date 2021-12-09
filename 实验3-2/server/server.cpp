@@ -126,16 +126,38 @@ void printFileErr();
 void printRTOErr();
 
 
+SOCKET sockSrv;
+SOCKADDR_IN addrSrv;
+SOCKADDR_IN addrClient;   //用来接收客户端的地址信息
+int len;
+
+int expectedNum=0;
+
+void recvDatagram();
+void makeSocket();
+
+
 int main(){
 
-// 设置套接字###############################################################################
     //加载套接字库
     WSADATA wsaData;
     WSAStartup(MAKEWORD(1, 1), &wsaData);
 
+    makeSocket();
+
+    recvDatagram();
+
+    closesocket(sockSrv);
+    WSACleanup();
+    return 0;
+}
+
+
+
+void makeSocket(){
     //创建用于监听的套接字
-    SOCKET sockSrv = socket(AF_INET, SOCK_DGRAM, 0);//失败会返回 INVALID_SOCKET
-    SOCKADDR_IN addrSrv;
+    sockSrv = socket(AF_INET, SOCK_DGRAM, 0);//失败会返回 INVALID_SOCKET
+    // SOCKADDR_IN addrSrv;
     addrSrv.sin_addr.s_addr = inet_addr("127.0.0.1");//输入你想通信的她（此处是本机内部）
     addrSrv.sin_family = AF_INET;
     addrSrv.sin_port = htons(1366);
@@ -143,16 +165,12 @@ int main(){
     //绑定套接字, 绑定到端口
     bind(sockSrv, (SOCKADDR*)&addrSrv, sizeof(SOCKADDR));//会返回一个SOCKET_ERROR
 
-    SOCKADDR_IN addrClient;   //用来接收客户端的地址信息
-    int len = sizeof(SOCKADDR);
+    // SOCKADDR_IN addrClient;   //用来接收客户端的地址信息
+    len = sizeof(SOCKADDR);
     cout<<"listening..."<<endl;
-// 设置套接字###############################################################################
+}
 
-
-// 接收报文#################################################################################
-
-    int expectedNum=0;
-
+void recvDatagram(){
     //建立连接，接收数据，判断数据校验和，回应报文
     while (1){
         recvfrom(sockSrv, recvBuffer, sizeof(recvBuffer), 0, (SOCKADDR*)&addrClient, &len);
@@ -239,16 +257,15 @@ int main(){
         }
     // 如果是普通数据报文###################################################################
     
-    }
-// 接收报文################################################################################
-
-
-// 结束任务################################################################################
-    closesocket(sockSrv);
-    WSACleanup();
-    return 0;
-// 结束任务################################################################################
+    }    
 }
+
+void getFileName(){
+    cout<<"Tell me which file you want to send.\n";
+    cin>>fileName;
+}
+
+//##################################### Setters #####################################//
 
 void setPort(){
     // 与0xff是为了把高过8位的都清空。
@@ -322,6 +339,11 @@ void setFinBit(char a){
     }
 }
 
+//##################################### Setters #####################################//
+
+
+//##################################### CheckSum #####################################//
+
 unsigned short calCheckSum(unsigned short* buf) {
     int count=HEAD_SIZE/2;
     register unsigned long sum = 0;
@@ -337,13 +359,46 @@ unsigned short calCheckSum(unsigned short* buf) {
     return ~(sum & 0xffff); //取反
 }
 
-
 void setCheckSum(){
     sendBuffer[14] = sendBuffer[15] = 0; // 校验和清零
     unsigned short x = calCheckSum((unsigned short*)&sendBuffer[0]); //计算校验和
     sendBuffer[15] = (char)((x >> 8) % 0x100);
     sendBuffer[14] = (char)(x % 0x100);
 }
+
+bool checkSumIsRight(){
+    unsigned short* buf=(unsigned short*)&recvBuffer[0];
+    register unsigned long sum = 0;
+    // 把每个字节加一遍
+    for(int i=0;i<HEAD_SIZE/2;i++){
+        sum += *buf;
+        // cout<<*buf<<" ";
+        buf++;
+        // 如果校验和不止16bit，把高位清0，最低位加一。
+        if (sum & 0xffff0000) {
+            // cout<<"把高位清零\n";
+            sum &= 0xffff;
+            sum++;
+        }
+    }
+
+    // 全加起来应该是0xffff
+
+    // if(sum==0xffff){
+    //     cout<<"CheckSum: "<<sum<<", ";
+    //     cout<<"CheckSum right!"<<endl;
+    // }
+    // else{
+    //     cout<<"CheckSum: "<<sum<<", ";
+    //     cout<<"CheckSum wrong!"<<endl;
+    // }
+    return sum==0xffff;
+}
+
+//##################################### CheckSum #####################################//
+
+
+//##################################### DataPack #####################################//
 
 void packSynDatagram(int sequenceNumber){
     setPort();
@@ -392,6 +447,11 @@ void packEmptyDatagram(){
     setCheckSum();
 }
 
+//##################################### DataPack #####################################//
+
+
+//##################################### LogPrint #####################################//
+
 void printLogSendBuffer(){
     cout<<"sendBuffer: ";
     cout<<"SeqNum: "<<getter.getSeqNum(sendBuffer)<<", ";
@@ -414,39 +474,10 @@ void printLogRecvBuffer(){
     cout<<"CheckSum: "<<getter.getCheckSum(recvBuffer)<<endl;
 }
 
-bool checkSumIsRight(){
-    unsigned short* buf=(unsigned short*)&recvBuffer[0];
-    register unsigned long sum = 0;
-    // 把每个字节加一遍
-    for(int i=0;i<HEAD_SIZE/2;i++){
-        sum += *buf;
-        // cout<<*buf<<" ";
-        buf++;
-        // 如果校验和不止16bit，把高位清0，最低位加一。
-        if (sum & 0xffff0000) {
-            // cout<<"把高位清零\n";
-            sum &= 0xffff;
-            sum++;
-        }
-    }
+//##################################### LogPrint #####################################//
 
-    // 全加起来应该是0xffff
 
-    // if(sum==0xffff){
-    //     cout<<"CheckSum: "<<sum<<", ";
-    //     cout<<"CheckSum right!"<<endl;
-    // }
-    // else{
-    //     cout<<"CheckSum: "<<sum<<", ";
-    //     cout<<"CheckSum wrong!"<<endl;
-    // }
-    return sum==0xffff;
-}
-
-void getFileName(){
-    cout<<"Tell me which file you want to send.\n";
-    cin>>fileName;
-}
+//##################################### ErrorPrint #####################################//
 
 void printBindingErr(){
     cout << "+-------------------------------+\n" ;
@@ -477,3 +508,5 @@ void printRTOErr(){
     cout << "| Over RTO. The server did not respond us. |\n";
     cout << "+------------------------------------------+\n";
 }
+
+//##################################### ErrorPrint #####################################//
