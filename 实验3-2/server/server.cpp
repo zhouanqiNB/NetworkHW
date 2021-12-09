@@ -128,7 +128,7 @@ void printRTOErr();
 
 int main(){
 
-// 设置套接字
+// 设置套接字###############################################################################
     //加载套接字库
     WSADATA wsaData;
     WSAStartup(MAKEWORD(1, 1), &wsaData);
@@ -145,23 +145,24 @@ int main(){
 
     SOCKADDR_IN addrClient;   //用来接收客户端的地址信息
     int len = sizeof(SOCKADDR);
-// 设置套接字
-
     cout<<"listening..."<<endl;
+// 设置套接字###############################################################################
 
+
+// 接收报文#################################################################################
+
+    int expectedNum=0;
 
     //建立连接，接收数据，判断数据校验和，回应报文
-    int expectedNum=0;
-    
     while (1){
         recvfrom(sockSrv, recvBuffer, sizeof(recvBuffer), 0, (SOCKADDR*)&addrClient, &len);
         cout<<"received."<<endl;
         printLogRecvBuffer();
 
-        // 如果是SYN报文
+    // 如果是SYN报文#######################################################################
         if(getter.getSynBit(recvBuffer)){
             cout<<"Got an SYN datagram!"<<endl;
-
+            
             //如果校验和没问题就返回一个SYN ACK报文，否则返回空报文
             if(checkSumIsRight()){
                 // SYN报文协商起始的序列号。
@@ -179,12 +180,16 @@ int main(){
                 cout<<"sent."<<endl;
             }
         }
-        // 如果是普通数据报文
+    // 如果是SYN报文#######################################################################
+
+
+    // 如果是普通数据报文###################################################################
         else{
             cout<<"Got an File datagram!"<<endl;
 
-            //如果校验和没问题就返回一个ACK报文+expected序列号，否则上次的ACK再发一遍（这里是默认SYN只发一遍，之后的全部都是File）
             if(checkSumIsRight()){
+                //如果校验和没问题就返回一个ACK报文+expected序列号，否则上次的ACK再发一遍
+                //（这里是默认SYN只发一遍，之后的全部都是File）
 
                 // 如果是第一个
                 int fileNameLength=0;
@@ -225,17 +230,24 @@ int main(){
                 printLogSendBuffer();
                 cout<<"sent."<<endl;
             }
+
             else{
                 sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
                 printLogSendBuffer();
                 cout<<"sent."<<endl;
             }
         }
+    // 如果是普通数据报文###################################################################
+    
     }
+// 接收报文################################################################################
 
+
+// 结束任务################################################################################
     closesocket(sockSrv);
     WSACleanup();
     return 0;
+// 结束任务################################################################################
 }
 
 void setPort(){
