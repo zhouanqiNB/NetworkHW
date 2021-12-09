@@ -1,34 +1,42 @@
 #include <iostream>
-#include <fstream>
-#include <winsock2.h>
-#include <time.h>
-#include <Winsock2.h>
-#include <stdio.h>
-#include <string>
-#include <vector>
-#include <ctime>
-#include <io.h>
-#include <cmath>
-
+#include <windows.h>
 using namespace std;
-
-void set(int* array,int number);
-
-int main(){
-	int n;
-	cin>>n;
-	cout<<n<<endl;
-	bool* window=new bool[n];
-	for(int i=0;i<n;i++){
-		window[i]=0;
-		cout<<"set"<<i<<endl;
-	}
-	for(int i=0;i<n;i++){
-		cout<<window[i];
-	}
-	cout<<endl;
-	window[2]=1;
-	for(int i=0;i<n;i++){
-		cout<<window[i];
-	}
+ 
+HANDLE hMutex = NULL;//互斥量
+//线程函数
+DWORD WINAPI Fun(LPVOID lpParamter)
+{
+	// 就是说你获取到机会之后就会做完再释放。
+	// 俩都要看这个锁，所以弄成了互斥的。
+    for (int i = 0; i < 10; i++)
+    {
+        //请求一个互斥量锁
+        WaitForSingleObject(hMutex, INFINITE);
+        cout << "A Thread Fun Display!" << endl;
+        Sleep(100);
+        //释放互斥量锁
+        ReleaseMutex(hMutex);
+    }
+    return 0L;//表示返回的是long型的0
+ 
+}
+ 
+int main()
+{
+    //创建一个子线程
+    HANDLE hThread = CreateThread(NULL, 0, Fun, NULL, 0, NULL);
+    hMutex = CreateMutex(NULL, FALSE,"screen");
+    //关闭线程句柄
+    CloseHandle(hThread);
+    //主线程的执行路径
+    for (int i = 0; i < 10; i++)
+    {
+        //请求获得一个互斥量锁
+        WaitForSingleObject(hMutex,INFINITE);
+        cout << "Main Thread Display!" << endl;
+        Sleep(100);
+        //释放互斥量锁
+        ReleaseMutex(hMutex);
+    }
+    return 0;
 }

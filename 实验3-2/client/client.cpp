@@ -63,7 +63,7 @@
 #pragma comment(lib, "ws2_32.lib")
 using namespace std;
 
-
+ofstream ccout;
 
 char sendBuffer[BUFFER_SIZE];
 char recvBuffer[BUFFER_SIZE];
@@ -147,7 +147,8 @@ void printCreateSocketErr();
 void printFileErr();
 void printRTOErr();
 
-
+int bytesHaveRead;
+int leftDataSize;
 // 一个格子对应着一个序列号和一个状态
 class SendGrid{
 public:
@@ -161,6 +162,7 @@ public:
     int seq;
     // Timer timer;
     char buffer[BUFFER_SIZE];
+    clock_t start;//这个包被发出去的时间
     SendGrid():state(0),seq(-1){};
     void setState(int a){state=a;}
     void setSeq(int a){seq=a;}
@@ -170,6 +172,8 @@ public:
         }
     }
 };
+int nowTime;
+int sendTimes;
 
 // 一个窗口大小是16
 class SendWindow{
@@ -178,20 +182,35 @@ public:
     // 窗口向右移动1位
     void move(){
         if(sendGrid[0].state==2){//如果最左侧是不是已经ack了
+            ccout<<"是时候移动窗口了！"<<endl;
+            nowTime=sendGrid[0].seq+1;
+            cout<<nowTime<<endl;
             for(int i=1;i<16;i++){
                 sendGrid[i-1].state=sendGrid[i].state;
                 sendGrid[i-1].seq=sendGrid[i].seq;
+                for(int j=0;j<BUFFER_SIZE;j++){
+                    sendGrid[i-1].buffer[j]=sendGrid[i].buffer[j];
+                }
             }
             sendGrid[15].setState(0);//最右边的格子重新空闲
+            sendGrid[15].setSeq(sendGrid[14].seq+1);
+            ccout<<"我移动了窗口！"<<endl;
+            // printWindow();
+            cout<<nowTime<<" "<<sendTimes<<endl;
+            if(nowTime==sendTimes){
+                cout<<"发完了我溜了"<<endl;
+                exit(0);
+            }
+            printWindow();
             if(sendGrid[0].state==2)//如果最左侧还是已经ack了，继续move
                 this->move();
         }
     }
     void printWindow(){
         for(int i=0;i<16;i++){
-            cout<<"number "<<i<<" state: "<<sendGrid[i].state<<", seq: "<<sendGrid[i].seq<<endl;
+            ccout<<"number "<<i<<" state: "<<sendGrid[i].state<<", seq: "<<sendGrid[i].seq<<endl;
         }
-        cout<<endl;
+        ccout<<endl;
     }
     bool haveGridLeft(){
         if(sendGrid[15].state!=0){
@@ -208,7 +227,7 @@ public:
             }
         }
     }
-};
+} win;
 
 SOCKET sockSrv;
 SOCKADDR_IN  addrServer;
@@ -216,12 +235,23 @@ SOCKADDR_IN  addrClient;
 int len;
 struct timeval timeout;
 
+HANDLE hMutex = NULL;//互斥量
+ifstream fin;
+
+int bytesHaveWritten; //加到bytesHaveSent里面。
+
 void sendSynDatagram();
 void sendFileDatagram();
 void makeSocket();
 void setRTO();
+void findFile();
+DWORD WINAPI ackReader(LPVOID lpParamter);
+void sendData(int i);
+void resendData(int i);
 
 int main(){
+    ccout.open("client.txt");
+    ccout<<"==============================================================================="<<endl;
 
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(1, 1), &wsaData);
@@ -230,7 +260,7 @@ int main(){
     setRTO();
 
     sendSynDatagram();
-    // sendFileDatagram();
+    sendFileDatagram();
 
     closesocket(sockSrv);
     WSACleanup();
@@ -241,7 +271,7 @@ void setRTO(){
     timeout.tv_usec = 0;   
 
     setsockopt(sockSrv, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
-    cout << "We successfully set the RTO." << endl;    
+    ccout << "We successfully set the RTO." << endl;    
 }
 
 void makeSocket(){
@@ -256,11 +286,8 @@ void makeSocket(){
     len = sizeof(SOCKADDR);
 }
 
-void sendFileDatagram(){
-    getFileName();
-
-    // 读入文件，计算文件长度
-    ifstream fin(fileName, ifstream::in | ios::binary);
+void findFile(){
+    fin.open(fileName, ifstream::in | ios::binary);
     fin.seekg(0, fin.end);              //把指针定位到末尾
     fileLength = fin.tellg();           //获取指针
     fin.seekg(0, fin.beg);              //将文件流指针重新定位到流的开始
@@ -269,108 +296,218 @@ void sendFileDatagram(){
         printFileErr();
         return;
     }
-    cout<<"The size of this file is "<<fileLength<<" bytes.\n";
+    ccout<<"The size of this file is "<<fileLength<<" bytes.\n";
     
-    // cout<<"fileLength: "<<fileLength<<endl;
-    // cout<<"fileName.length(): "<<fileName.length()<<endl;
-    // cout<<"DATA_SIZE: "<<DATA_SIZE<<endl;
-    int sendTimes = ceil(((double)fileLength+(double)fileName.length() )/(double)DATA_SIZE);     //需要发送这么多次
-    cout << "We will split this file to " << sendTimes << " packages and send it." << endl;
+    // ccout<<"fileLength: "<<fileLength<<endl;
+    // ccout<<"fileName.length(): "<<fileName.length()<<endl;
+    // ccout<<"DATA_SIZE: "<<DATA_SIZE<<endl;
+    sendTimes = ceil(((double)fileLength+(double)fileName.length() )/(double)DATA_SIZE);     //需要发送这么多次
+    ccout << "We will split this file to " << sendTimes << " packages and send it." << endl;
+
+}
+void sendData(int i){
+    ccout<<"我要设置win"<<i<<"的seq为"<<sequenceNumber<<endl;
+
+    win.sendGrid[i].seq=sequenceNumber;
+    if(sequenceNumber>=sendTimes){
+        return;
+    }
+    win.sendGrid[i].state=1;
+
+    // win.printWindow();
+    leftDataSize=DATA_SIZE;
+    if(isFirstPackage){
+        // 是第一个包
+        packFirst();//加上Size
+        sequenceNumber++;
+        // 数据段的前length个位置放文件名
+        for(int j=0;j<fileName.length();j++){
+            sendBuffer[HEAD_SIZE+j]=fileName[j];
+        }
+        leftDataSize -= fileName.length();      //因为要传文件名所以剩下能传数据的空间就小了。
+        bytesHaveWritten += fileName.length();  //传文件名也是传
+        isFirstPackage=false;
+        // 根据序列号packData.
+    }
+    else{
+        packData();//没有Size的普通头
+        sequenceNumber++;
+
+    }
+    fin.seekg(bytesHaveRead,fin.beg);
+    int sendSize = min(leftDataSize, fileLength-bytesHaveRead); //如果是最后一个包的话可能会不满。
+
+    fin.read(&sendBuffer[HEAD_SIZE + (DATA_SIZE - leftDataSize)], sendSize);// sendBuffer从什么地方开始读起，读多少
+    bytesHaveRead += sendSize;
+    bytesHaveWritten += sendSize;
+
+
+    sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrServer, len);
+    ccout<<"发送了"<<sequenceNumber-1<<endl;
+
+    //保存到窗口自带的Buffer里面。
+    for(int j=0;j<BUFFER_SIZE;j++){
+        win.sendGrid[i].buffer[j]=sendBuffer[j];
+    }
+
+    bytesHaveSent+=bytesHaveWritten;
+    ccout<<"\nbytesHaveSent: "<<bytesHaveSent<<endl;
+    // printLogSendBuffer();
+    ccout<<"sent."<<endl;
+    memset(sendBuffer, 0, sizeof(sendBuffer));
+}
+void resendData(int i){
+    for(int j=0;j<BUFFER_SIZE;j++){
+        sendBuffer[j]=win.sendGrid[i].buffer[j];
+    } 
+    sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrServer, len);
+    cout<<"重新发了"<<i<<"号"<<endl;
+    printLogSendBuffer();
+    ccout<<sequenceNumber<<" resent."<<endl;
+
+}
+DWORD WINAPI ackReader(LPVOID lpParamter){
+
+    while(1){
+        // 收到消息
+        int it=recvfrom(sockSrv, recvBuffer, sizeof(recvBuffer), 0, (SOCKADDR*)&addrServer, &len);
+        
+        // 当对方发癫
+        if(!checkSumIsRight()){
+            ccout<<"CheckSum is wrong!"<<endl;
+        }
+        if(getter.getAckBit(recvBuffer)==false){
+            ccout<<"not an ack datagram!"<<endl;
+            continue;
+        }
+
+        WaitForSingleObject(hMutex,INFINITE);
+        ccout<<"==============="<<endl;
+        ccout<<"ackreader拿到了锁"<<endl;
+        ccout<<"==============="<<endl;
+        printLogRecvBuffer();
+
+        int i=0;
+        for(;i<16;i++){
+            // 如果匹配上了
+            if(getter.getAckNum(recvBuffer)==win.sendGrid[i].seq){
+                ccout<<"matched! window: "<<i;
+                ccout<<"seq: "<<getter.getAckNum(recvBuffer)<<endl;
+                break;
+            }
+        }
+        // 说明一个都没匹配上
+        if(i==16){
+            ccout<<"一个都没匹配上"<<endl;
+            ReleaseMutex(hMutex);
+            continue;
+        }
+
+        win.sendGrid[i].state=2;//把这个格子的状态位置2
+        // win.printWindow();
+
+        // 没接收到一个看看能不能Move。
+        win.move();
+
+        if(nowTime==sendTimes){
+            ReleaseMutex(hMutex);
+            cout<<"现在是第"<<nowTime<<"次。\n";
+            cout<<"我退出了"<<endl;
+            return 0L;//表示返回的是long型的0
+
+        }
+        ccout<<"==============="<<endl;
+        ccout<<"ackreader释放了锁"<<endl;
+        ccout<<"==============="<<endl;
+        ReleaseMutex(hMutex);
+
+    }
+
+}
+
+
+void sendFileDatagram(){
+    getFileName();
+
+    // 根据文件名读入文件，计算文件长度和sendTimes
+    findFile();
 
     int t_start=clock();
     sequenceNumber=0;
 
-    int bytesHaveRead=0;    //数据指针
-    int bytesHaveWritten=0; //加到bytesHaveSent里面。
+    bytesHaveRead=0;    //数据指针
+    bytesHaveWritten=0; //加到bytesHaveSent里面。
 
-    int nowTime=0;
+    nowTime=0;
+
+
+    HANDLE hThread = CreateThread(NULL, 0, ackReader, NULL, 0, NULL);
+    hMutex = CreateMutex(NULL, FALSE,"screen");
+    
+    CloseHandle(hThread);//关闭线程的句柄，但是线程还会继续跑。
+
     while(1){
-        int leftDataSize=DATA_SIZE;
-        bytesHaveWritten=0;
 
-        //把头弄好
-        if(isFirstPackage){
-            packFirst();//加上Size
-
-            // 数据段的前length个位置放文件名
-            for(int j=0;j<fileName.length();j++){
-                sendBuffer[HEAD_SIZE+j]=fileName[j];
-            }
-            leftDataSize -= fileName.length();      //因为要传文件名所以剩下能传数据的空间就小了。
-            bytesHaveWritten += fileName.length();  //传文件名也是传
-            isFirstPackage=false;
-            // 根据序列号packData.
-        }
-        else{
-            packData();//没有Size的普通头
-        }
+        // 拿到锁，可以跑一次循环了
         if(nowTime==sendTimes-1){
-            setFinBit(1);
-            setCheckSum();
+            cout<<"我退出了！"<<endl;
+            return;
         }
-        //把头弄好
 
+        WaitForSingleObject(hMutex, INFINITE);
+        ccout<<"==============="<<endl;
+        ccout<<"发文件拿到了锁"<<endl;
+        ccout<<"==============="<<endl;
 
-        //开始读数据
-        fin.seekg(bytesHaveRead,fin.beg);
-        int sendSize = min(leftDataSize, fileLength-bytesHaveRead); //如果是最后一个包的话可能会不满。
-
-        // cout<<"sendSize: "<<sendSize<<endl;
-        // cout<<"leftDataSize: "<<leftDataSize<<endl;
-        // cout<<"fileLength-bytesHaveRead: "<<fileLength-bytesHaveRead<<endl;
-        fin.read(&sendBuffer[HEAD_SIZE + (DATA_SIZE - leftDataSize)], sendSize);// sendBuffer从什么地方开始读起，读多少
-        bytesHaveRead += sendSize;
-        bytesHaveWritten += sendSize;
-
-
-        sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrServer, len);
-        bytesHaveSent+=bytesHaveWritten;
-        cout<<"bytesHaveSent: "<<bytesHaveSent<<endl;
-        printLogSendBuffer();
-        cout<<"sent."<<endl;
-        memset(sendBuffer, 0, sizeof(sendBuffer));
-
-
-        int it=recvfrom(sockSrv, recvBuffer, sizeof(recvBuffer), 0, (SOCKADDR*)&addrServer, &len);
-        
-        if(it<=0){
-            if(WSAGetLastError()==10060){ //超时重传
-                printRTOErr();
-                continue;//再次循环，反正ACKNum没有更新，还用那个序列号
-            }
+        if(win.sendGrid[0].seq==sendTimes-1){
+            ccout<<"==============="<<endl;
+            ccout<<"这是最后一个了"<<endl;
+            ccout<<"==============="<<endl;
+            ReleaseMutex(hMutex);
+            break;
         }
-        else{
-            printLogRecvBuffer();
-            cout<<"received."<<endl;
+        for(int i=0;i<16;i++){
 
-            // 如果校验和出问题了，把当前的包再发一遍
-            if(!checkSumIsRight()){
-                bytesHaveRead-=sendSize;
-                bytesHaveWritten -= sendSize;
+            if(win.sendGrid[i].state==2){//如果已经被ack了不做处理
+                ccout<<"窗口"<<i<<"已经被ack了"<<endl;
                 continue;
             }
+            // 如果timer没被用上，那么开始发文件
+            if(win.sendGrid[i].state==0){
+                ccout<<"窗口"<<i<<"还没用上"<<endl;
 
-            // 没有损坏
-            if(getter.getAckBit(recvBuffer)){
-                if(sequenceNumber+1==getter.getAckNum(recvBuffer)||sequenceNumber+1+getter.getAckNum(recvBuffer)==128){
-                    nowTime++;
-                    cout<<"nowTime: "<<nowTime<<endl;
-                }
-                sequenceNumber=getter.getAckNum(recvBuffer);
+                win.sendGrid[i].start=clock();//获取当前时间
+                ccout<<"我要在窗口"<<i<<"发数据"<<endl;
+                sendData(i);//把发送内容放在win.sendGrid[i].buffer[]中
+                // 同时在里面printLog
+            }
+            // timer已经开了
+            else{
+                ccout<<"窗口"<<i<<"已经用上了"<<endl;
 
-                if(getter.getFinBit(recvBuffer)){
-                    break;
+                int time=clock()-win.sendGrid[i].start;
+                // 还没有超时呢不处理
+                // clock是按照CPU算的，我这里给的超时是一秒
+                if(time<1*CLOCKS_PER_SEC){
+                    ccout<<"没有超时\n";
+                    continue;
                 }
-                continue;
-            } 
+                // 超时了，重传
+                else{
+                    printRTOErr();
+                    win.sendGrid[i].start=clock();//重新设置定时器
+                    resendData(i);//重新把grid[i].buffer里的内容再发一遍，并且printLog
+                }
+            }
+
         }
+        ccout<<"==============="<<endl;
+        ccout<<"发文件释放了锁"<<endl;
+        ccout<<"==============="<<endl;
+        ReleaseMutex(hMutex);
+
+
     }
-    int t_end=clock();
-    cout<<"Sent "<<bytesHaveSent<<" bytes, ";
-    cout<<"Cost time: "<< t_end - t_start << "(ms), ";
-    // numOfBit/time
-    cout <<"Throughput rate: " << bytesHaveSent * 8 / (t_end - t_start) * CLOCKS_PER_SEC << " bps" << endl;
-    fin.close();    
 }
 
 void sendSynDatagram(){
@@ -379,7 +516,7 @@ void sendSynDatagram(){
         packSynDatagram(0);
         sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrServer, len);
         printLogSendBuffer();
-        cout << "sent." << endl;
+        ccout << "sent." << endl;
 
         int it=recvfrom(sockSrv, recvBuffer, sizeof(recvBuffer), 0, (SOCKADDR*)&addrServer, &len);
         
@@ -393,7 +530,7 @@ void sendSynDatagram(){
             printLogRecvBuffer();
             // 不断发送SYN，直到收到SYN+ACK为止。
             if(getter.getAckBit(recvBuffer) && getter.getSynBit(recvBuffer) && checkSumIsRight()){
-                cout<<"Got a SYN ACK!"<<endl;
+                ccout<<"Got a SYN ACK!"<<endl;
                 break;
             }
         }
@@ -401,7 +538,7 @@ void sendSynDatagram(){
 }
 
 void getFileName(){
-    cout<<"Tell me which file you want to send.\n";
+    std::cout<<"Tell me which file you want to send.\n";
     cin>>fileName;
 }
 
@@ -439,9 +576,9 @@ void setAckNum(int num){
 void setSize(int num){
     // 在这里放了文件名长度，最多15，本来应该是放option长度的。
     if(num>>8){
-        cout<<"+-------------------------------------------------+\n";
-        cout<<"| This fileName is too long! We cannot handle it! |\n";
-        cout<<"+-------------------------------------------------+\n";
+        ccout<<"+-------------------------------------------------+\n";
+        ccout<<"| This fileName is too long! We cannot handle it! |\n";
+        ccout<<"+-------------------------------------------------+\n";
     }
     sendBuffer[12] = (char)(num & 0xff);
 }
@@ -513,11 +650,11 @@ bool checkSumIsRight(){
     // 把每个字节加一遍
     for(int i=0;i<HEAD_SIZE/2;i++){
         sum += *buf;
-        // cout<<*buf<<" ";
+        // ccout<<*buf<<" ";
         buf++;
         // 如果校验和不止16bit，把高位清0，最低位加一。
         if (sum & 0xffff0000) {
-            // cout<<"把高位清零\n";
+            // ccout<<"把高位清零\n";
             sum &= 0xffff;
             sum++;
         }
@@ -526,12 +663,12 @@ bool checkSumIsRight(){
     // 全加起来应该是0xffff
 
     // if(sum==0xffff){
-    //     cout<<"CheckSum: "<<sum<<", ";
-    //     cout<<"CheckSum right!"<<endl;
+    //     ccout<<"CheckSum: "<<sum<<", ";
+    //     ccout<<"CheckSum right!"<<endl;
     // }
     // else{
-    //     cout<<"CheckSum: "<<sum<<", ";
-    //     cout<<"CheckSum wrong!"<<endl;
+    //     ccout<<"CheckSum: "<<sum<<", ";
+    //     ccout<<"CheckSum wrong!"<<endl;
     // }
     return sum==0xffff;
 }
@@ -584,6 +721,10 @@ void packFirst(){
     setAckBit(0);
     setFinBit(0);
     setCheckSum();
+    // 数据段的前length个位置放文件名
+    for(int j=0;j<fileName.length();j++){
+        sendBuffer[HEAD_SIZE+j]=fileName[j];
+    }
 }
 // 设置头
 void packData(){
@@ -601,58 +742,58 @@ void packData(){
 //##################################### LogPrint #####################################//
 
 void printLogSendBuffer(){
-    cout<<"sendBuffer: ";
-    cout<<"SeqNum: "<<getter.getSeqNum(sendBuffer)<<", ";
-    cout<<"AckNum: "<<getter.getAckNum(sendBuffer)<<", ";
-    cout<<"Size: "<<getter.getSize(sendBuffer)<<", ";
-    cout<<"SYN: "<<getter.getSynBit(sendBuffer)<<", ";
-    cout<<"ACK: "<<getter.getAckBit(sendBuffer)<<", ";
-    cout<<"FIN: "<<getter.getFinBit(sendBuffer)<<", ";
-    cout<<"CheckSum: "<<getter.getCheckSum(sendBuffer)<<endl;
+    ccout<<"sendBuffer: ";
+    ccout<<"SeqNum: "<<getter.getSeqNum(sendBuffer)<<", ";
+    ccout<<"AckNum: "<<getter.getAckNum(sendBuffer)<<", ";
+    ccout<<"Size: "<<getter.getSize(sendBuffer)<<", ";
+    ccout<<"SYN: "<<getter.getSynBit(sendBuffer)<<", ";
+    ccout<<"ACK: "<<getter.getAckBit(sendBuffer)<<", ";
+    ccout<<"FIN: "<<getter.getFinBit(sendBuffer)<<", ";
+    ccout<<"CheckSum: "<<getter.getCheckSum(sendBuffer)<<endl;
 }
 
 void printLogRecvBuffer(){
-    cout<<"recvBuffer: ";
-    cout<<"SeqNum: "<<getter.getSeqNum(recvBuffer)<<", ";
-    cout<<"AckNum: "<<getter.getAckNum(recvBuffer)<<", ";
-    cout<<"Size: "<<getter.getSize(recvBuffer)<<", ";
-    cout<<"SYN: "<<getter.getSynBit(recvBuffer)<<", ";
-    cout<<"ACK: "<<getter.getAckBit(recvBuffer)<<", ";
-    cout<<"FIN: "<<getter.getFinBit(recvBuffer)<<", ";
-    cout<<"CheckSum: "<<getter.getCheckSum(recvBuffer)<<endl;
+    ccout<<"recvBuffer: ";
+    ccout<<"SeqNum: "<<getter.getSeqNum(recvBuffer)<<", ";
+    ccout<<"AckNum: "<<getter.getAckNum(recvBuffer)<<", ";
+    ccout<<"Size: "<<getter.getSize(recvBuffer)<<", ";
+    ccout<<"SYN: "<<getter.getSynBit(recvBuffer)<<", ";
+    ccout<<"ACK: "<<getter.getAckBit(recvBuffer)<<", ";
+    ccout<<"FIN: "<<getter.getFinBit(recvBuffer)<<", ";
+    ccout<<"CheckSum: "<<getter.getCheckSum(recvBuffer)<<endl;
 }
 //##################################### LogPrint #####################################//
 
 //##################################### ErrorPrint #####################################//
 
 void printBindingErr(){
-    cout << "+-------------------------------+\n" ;
-    cout << "| We met problems when binding. |\n" ;
-    cout << "+-------------------------------+\n" ;
+    ccout << "+-------------------------------+\n" ;
+    ccout << "| We met problems when binding. |\n" ;
+    ccout << "+-------------------------------+\n" ;
 }
 
 void printLibErr(){
-    cout << "+------------------------------------+\n" ;
-    cout << "| We met problems when loading libs. |\n" ;
-    cout << "+------------------------------------+\n" ;            
+    ccout << "+------------------------------------+\n" ;
+    ccout << "| We met problems when loading libs. |\n" ;
+    ccout << "+------------------------------------+\n" ;            
 }
 
 void printCreateSocketErr(){
-    cout << "+--------------------------------+\n" ;
-    cout << "| We cannot create a new socket. |\n" ;
-    cout << "+--------------------------------+\n" ;            
+    ccout << "+--------------------------------+\n" ;
+    ccout << "| We cannot create a new socket. |\n" ;
+    ccout << "+--------------------------------+\n" ;            
 }
 
 void printFileErr(){
-    cout << "+--------------------------------+\n";
-    cout << "| Sorry we cannot open the file. |\n";
-    cout << "+--------------------------------+\n";                
+    ccout << "+--------------------------------+\n";
+    ccout << "| Sorry we cannot open the file. |\n";
+    ccout << "+--------------------------------+\n";                
 }
 
 void printRTOErr(){
-    cout << "+-----------------------------------------------------------+\n";
-    cout << "| Over RTO. The server did not respond us, will send again. |\n";
-    cout << "+-----------------------------------------------------------+\n";
+    ccout << "+-----------------------------------------------------------+\n";
+    ccout << "| Over RTO. The server did not respond us, will send again. |\n";
+    ccout << "+-----------------------------------------------------------+\n";
 }
 
 //##################################### ErrorPrint #####################################//

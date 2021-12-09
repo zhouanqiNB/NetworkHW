@@ -1,0 +1,804 @@
+===============================================================================
+listening...
+received.
+recvBuffer: SeqNum: 0, AckNum: 0, Size: 0, SYN: 1, ACK: 0, FIN: 0, CheckSum: 62554
+Got an SYN datagram!
+sendBuffer: SeqNum: 0, AckNum: 0, Size: 0, SYN: 1, ACK: 1, FIN: 0, CheckSum: 58458
+Sent SYN ACK.
+received.
+recvBuffer: SeqNum: 0, AckNum: 0, Size: 1, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63065
+
+这是一个文件报文!
+这是第一个包，我要开始写了。
+我获取了文件的名称
+fileName: 1
+匹配上了我们窗口里的0,它要的序列号是0
+sent.
+number 0 state: 0, seq: 1
+number 1 state: 0, seq: 2
+number 2 state: 0, seq: 3
+number 3 state: 0, seq: 4
+number 4 state: 0, seq: 5
+number 5 state: 0, seq: 6
+number 6 state: 0, seq: 7
+number 7 state: 0, seq: 8
+number 8 state: 0, seq: 9
+number 9 state: 0, seq: 10
+number 10 state: 0, seq: 11
+number 11 state: 0, seq: 12
+number 12 state: 0, seq: 13
+number 13 state: 0, seq: 14
+number 14 state: 0, seq: 15
+number 15 state: 0, seq: 16
+
+received.
+recvBuffer: SeqNum: 1, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63065
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是1
+sent.
+number 0 state: 0, seq: 2
+number 1 state: 0, seq: 3
+number 2 state: 0, seq: 4
+number 3 state: 0, seq: 5
+number 4 state: 0, seq: 6
+number 5 state: 0, seq: 7
+number 6 state: 0, seq: 8
+number 7 state: 0, seq: 9
+number 8 state: 0, seq: 10
+number 9 state: 0, seq: 11
+number 10 state: 0, seq: 12
+number 11 state: 0, seq: 13
+number 12 state: 0, seq: 14
+number 13 state: 0, seq: 15
+number 14 state: 0, seq: 16
+number 15 state: 0, seq: 17
+
+received.
+recvBuffer: SeqNum: 2, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63064
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是2
+sent.
+number 0 state: 0, seq: 3
+number 1 state: 0, seq: 4
+number 2 state: 0, seq: 5
+number 3 state: 0, seq: 6
+number 4 state: 0, seq: 7
+number 5 state: 0, seq: 8
+number 6 state: 0, seq: 9
+number 7 state: 0, seq: 10
+number 8 state: 0, seq: 11
+number 9 state: 0, seq: 12
+number 10 state: 0, seq: 13
+number 11 state: 0, seq: 14
+number 12 state: 0, seq: 15
+number 13 state: 0, seq: 16
+number 14 state: 0, seq: 17
+number 15 state: 0, seq: 18
+
+received.
+recvBuffer: SeqNum: 16, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63050
+
+这是一个文件报文!
+匹配上了我们窗口里的13,它要的序列号是16
+sent.
+received.
+recvBuffer: SeqNum: 17, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63049
+
+这是一个文件报文!
+匹配上了我们窗口里的14,它要的序列号是17
+sent.
+received.
+recvBuffer: SeqNum: 5, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63061
+
+这是一个文件报文!
+匹配上了我们窗口里的2,它要的序列号是5
+sent.
+received.
+recvBuffer: SeqNum: 6, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63060
+
+这是一个文件报文!
+匹配上了我们窗口里的3,它要的序列号是6
+sent.
+received.
+recvBuffer: SeqNum: 7, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63059
+
+这是一个文件报文!
+匹配上了我们窗口里的4,它要的序列号是7
+sent.
+received.
+recvBuffer: SeqNum: 8, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63058
+
+这是一个文件报文!
+匹配上了我们窗口里的5,它要的序列号是8
+sent.
+received.
+recvBuffer: SeqNum: 9, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63057
+
+这是一个文件报文!
+匹配上了我们窗口里的6,它要的序列号是9
+sent.
+received.
+recvBuffer: SeqNum: 10, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63056
+
+这是一个文件报文!
+匹配上了我们窗口里的7,它要的序列号是10
+sent.
+received.
+recvBuffer: SeqNum: 11, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63055
+
+这是一个文件报文!
+匹配上了我们窗口里的8,它要的序列号是11
+sent.
+received.
+recvBuffer: SeqNum: 12, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63054
+
+这是一个文件报文!
+匹配上了我们窗口里的9,它要的序列号是12
+sent.
+received.
+recvBuffer: SeqNum: 13, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63053
+
+这是一个文件报文!
+匹配上了我们窗口里的10,它要的序列号是13
+sent.
+received.
+recvBuffer: SeqNum: 14, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63052
+
+这是一个文件报文!
+匹配上了我们窗口里的11,它要的序列号是14
+sent.
+received.
+recvBuffer: SeqNum: 15, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63051
+
+这是一个文件报文!
+匹配上了我们窗口里的12,它要的序列号是15
+sent.
+received.
+recvBuffer: SeqNum: 18, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63048
+
+这是一个文件报文!
+匹配上了我们窗口里的15,它要的序列号是18
+sent.
+received.
+recvBuffer: SeqNum: 3, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63063
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是3
+sent.
+number 0 state: 0, seq: 4
+number 1 state: 1, seq: 5
+number 2 state: 1, seq: 6
+number 3 state: 1, seq: 7
+number 4 state: 1, seq: 8
+number 5 state: 1, seq: 9
+number 6 state: 1, seq: 10
+number 7 state: 1, seq: 11
+number 8 state: 1, seq: 12
+number 9 state: 1, seq: 13
+number 10 state: 1, seq: 14
+number 11 state: 1, seq: 15
+number 12 state: 1, seq: 16
+number 13 state: 1, seq: 17
+number 14 state: 1, seq: 18
+number 15 state: 0, seq: 19
+
+received.
+recvBuffer: SeqNum: 4, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63062
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是4
+sent.
+number 0 state: 1, seq: 5
+number 1 state: 1, seq: 6
+number 2 state: 1, seq: 7
+number 3 state: 1, seq: 8
+number 4 state: 1, seq: 9
+number 5 state: 1, seq: 10
+number 6 state: 1, seq: 11
+number 7 state: 1, seq: 12
+number 8 state: 1, seq: 13
+number 9 state: 1, seq: 14
+number 10 state: 1, seq: 15
+number 11 state: 1, seq: 16
+number 12 state: 1, seq: 17
+number 13 state: 1, seq: 18
+number 14 state: 0, seq: 19
+number 15 state: 0, seq: 20
+
+number 0 state: 1, seq: 6
+number 1 state: 1, seq: 7
+number 2 state: 1, seq: 8
+number 3 state: 1, seq: 9
+number 4 state: 1, seq: 10
+number 5 state: 1, seq: 11
+number 6 state: 1, seq: 12
+number 7 state: 1, seq: 13
+number 8 state: 1, seq: 14
+number 9 state: 1, seq: 15
+number 10 state: 1, seq: 16
+number 11 state: 1, seq: 17
+number 12 state: 1, seq: 18
+number 13 state: 0, seq: 19
+number 14 state: 0, seq: 20
+number 15 state: 0, seq: 21
+
+number 0 state: 1, seq: 7
+number 1 state: 1, seq: 8
+number 2 state: 1, seq: 9
+number 3 state: 1, seq: 10
+number 4 state: 1, seq: 11
+number 5 state: 1, seq: 12
+number 6 state: 1, seq: 13
+number 7 state: 1, seq: 14
+number 8 state: 1, seq: 15
+number 9 state: 1, seq: 16
+number 10 state: 1, seq: 17
+number 11 state: 1, seq: 18
+number 12 state: 0, seq: 19
+number 13 state: 0, seq: 20
+number 14 state: 0, seq: 21
+number 15 state: 0, seq: 22
+
+number 0 state: 1, seq: 8
+number 1 state: 1, seq: 9
+number 2 state: 1, seq: 10
+number 3 state: 1, seq: 11
+number 4 state: 1, seq: 12
+number 5 state: 1, seq: 13
+number 6 state: 1, seq: 14
+number 7 state: 1, seq: 15
+number 8 state: 1, seq: 16
+number 9 state: 1, seq: 17
+number 10 state: 1, seq: 18
+number 11 state: 0, seq: 19
+number 12 state: 0, seq: 20
+number 13 state: 0, seq: 21
+number 14 state: 0, seq: 22
+number 15 state: 0, seq: 23
+
+number 0 state: 1, seq: 9
+number 1 state: 1, seq: 10
+number 2 state: 1, seq: 11
+number 3 state: 1, seq: 12
+number 4 state: 1, seq: 13
+number 5 state: 1, seq: 14
+number 6 state: 1, seq: 15
+number 7 state: 1, seq: 16
+number 8 state: 1, seq: 17
+number 9 state: 1, seq: 18
+number 10 state: 0, seq: 19
+number 11 state: 0, seq: 20
+number 12 state: 0, seq: 21
+number 13 state: 0, seq: 22
+number 14 state: 0, seq: 23
+number 15 state: 0, seq: 24
+
+number 0 state: 1, seq: 10
+number 1 state: 1, seq: 11
+number 2 state: 1, seq: 12
+number 3 state: 1, seq: 13
+number 4 state: 1, seq: 14
+number 5 state: 1, seq: 15
+number 6 state: 1, seq: 16
+number 7 state: 1, seq: 17
+number 8 state: 1, seq: 18
+number 9 state: 0, seq: 19
+number 10 state: 0, seq: 20
+number 11 state: 0, seq: 21
+number 12 state: 0, seq: 22
+number 13 state: 0, seq: 23
+number 14 state: 0, seq: 24
+number 15 state: 0, seq: 25
+
+number 0 state: 1, seq: 11
+number 1 state: 1, seq: 12
+number 2 state: 1, seq: 13
+number 3 state: 1, seq: 14
+number 4 state: 1, seq: 15
+number 5 state: 1, seq: 16
+number 6 state: 1, seq: 17
+number 7 state: 1, seq: 18
+number 8 state: 0, seq: 19
+number 9 state: 0, seq: 20
+number 10 state: 0, seq: 21
+number 11 state: 0, seq: 22
+number 12 state: 0, seq: 23
+number 13 state: 0, seq: 24
+number 14 state: 0, seq: 25
+number 15 state: 0, seq: 26
+
+number 0 state: 1, seq: 12
+number 1 state: 1, seq: 13
+number 2 state: 1, seq: 14
+number 3 state: 1, seq: 15
+number 4 state: 1, seq: 16
+number 5 state: 1, seq: 17
+number 6 state: 1, seq: 18
+number 7 state: 0, seq: 19
+number 8 state: 0, seq: 20
+number 9 state: 0, seq: 21
+number 10 state: 0, seq: 22
+number 11 state: 0, seq: 23
+number 12 state: 0, seq: 24
+number 13 state: 0, seq: 25
+number 14 state: 0, seq: 26
+number 15 state: 0, seq: 27
+
+number 0 state: 1, seq: 13
+number 1 state: 1, seq: 14
+number 2 state: 1, seq: 15
+number 3 state: 1, seq: 16
+number 4 state: 1, seq: 17
+number 5 state: 1, seq: 18
+number 6 state: 0, seq: 19
+number 7 state: 0, seq: 20
+number 8 state: 0, seq: 21
+number 9 state: 0, seq: 22
+number 10 state: 0, seq: 23
+number 11 state: 0, seq: 24
+number 12 state: 0, seq: 25
+number 13 state: 0, seq: 26
+number 14 state: 0, seq: 27
+number 15 state: 0, seq: 28
+
+number 0 state: 1, seq: 14
+number 1 state: 1, seq: 15
+number 2 state: 1, seq: 16
+number 3 state: 1, seq: 17
+number 4 state: 1, seq: 18
+number 5 state: 0, seq: 19
+number 6 state: 0, seq: 20
+number 7 state: 0, seq: 21
+number 8 state: 0, seq: 22
+number 9 state: 0, seq: 23
+number 10 state: 0, seq: 24
+number 11 state: 0, seq: 25
+number 12 state: 0, seq: 26
+number 13 state: 0, seq: 27
+number 14 state: 0, seq: 28
+number 15 state: 0, seq: 29
+
+number 0 state: 1, seq: 15
+number 1 state: 1, seq: 16
+number 2 state: 1, seq: 17
+number 3 state: 1, seq: 18
+number 4 state: 0, seq: 19
+number 5 state: 0, seq: 20
+number 6 state: 0, seq: 21
+number 7 state: 0, seq: 22
+number 8 state: 0, seq: 23
+number 9 state: 0, seq: 24
+number 10 state: 0, seq: 25
+number 11 state: 0, seq: 26
+number 12 state: 0, seq: 27
+number 13 state: 0, seq: 28
+number 14 state: 0, seq: 29
+number 15 state: 0, seq: 30
+
+number 0 state: 1, seq: 16
+number 1 state: 1, seq: 17
+number 2 state: 1, seq: 18
+number 3 state: 0, seq: 19
+number 4 state: 0, seq: 20
+number 5 state: 0, seq: 21
+number 6 state: 0, seq: 22
+number 7 state: 0, seq: 23
+number 8 state: 0, seq: 24
+number 9 state: 0, seq: 25
+number 10 state: 0, seq: 26
+number 11 state: 0, seq: 27
+number 12 state: 0, seq: 28
+number 13 state: 0, seq: 29
+number 14 state: 0, seq: 30
+number 15 state: 0, seq: 31
+
+number 0 state: 1, seq: 17
+number 1 state: 1, seq: 18
+number 2 state: 0, seq: 19
+number 3 state: 0, seq: 20
+number 4 state: 0, seq: 21
+number 5 state: 0, seq: 22
+number 6 state: 0, seq: 23
+number 7 state: 0, seq: 24
+number 8 state: 0, seq: 25
+number 9 state: 0, seq: 26
+number 10 state: 0, seq: 27
+number 11 state: 0, seq: 28
+number 12 state: 0, seq: 29
+number 13 state: 0, seq: 30
+number 14 state: 0, seq: 31
+number 15 state: 0, seq: 32
+
+number 0 state: 1, seq: 18
+number 1 state: 0, seq: 19
+number 2 state: 0, seq: 20
+number 3 state: 0, seq: 21
+number 4 state: 0, seq: 22
+number 5 state: 0, seq: 23
+number 6 state: 0, seq: 24
+number 7 state: 0, seq: 25
+number 8 state: 0, seq: 26
+number 9 state: 0, seq: 27
+number 10 state: 0, seq: 28
+number 11 state: 0, seq: 29
+number 12 state: 0, seq: 30
+number 13 state: 0, seq: 31
+number 14 state: 0, seq: 32
+number 15 state: 0, seq: 33
+
+number 0 state: 0, seq: 19
+number 1 state: 0, seq: 20
+number 2 state: 0, seq: 21
+number 3 state: 0, seq: 22
+number 4 state: 0, seq: 23
+number 5 state: 0, seq: 24
+number 6 state: 0, seq: 25
+number 7 state: 0, seq: 26
+number 8 state: 0, seq: 27
+number 9 state: 0, seq: 28
+number 10 state: 0, seq: 29
+number 11 state: 0, seq: 30
+number 12 state: 0, seq: 31
+number 13 state: 0, seq: 32
+number 14 state: 0, seq: 33
+number 15 state: 0, seq: 34
+
+received.
+recvBuffer: SeqNum: 8, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63058
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 8, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58962
+sent.
+received.
+recvBuffer: SeqNum: 9, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63057
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 9, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58961
+sent.
+received.
+recvBuffer: SeqNum: 10, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63056
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 10, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58960
+sent.
+received.
+recvBuffer: SeqNum: 11, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63055
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 11, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58959
+sent.
+received.
+recvBuffer: SeqNum: 12, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63054
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 12, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58958
+sent.
+received.
+recvBuffer: SeqNum: 13, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63053
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 13, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58957
+sent.
+received.
+recvBuffer: SeqNum: 14, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63052
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 14, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58956
+sent.
+received.
+recvBuffer: SeqNum: 15, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63051
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 15, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58955
+sent.
+received.
+recvBuffer: SeqNum: 3, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63063
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 3, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58967
+sent.
+received.
+recvBuffer: SeqNum: 13, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63053
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 13, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58957
+sent.
+received.
+recvBuffer: SeqNum: 14, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63052
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 14, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58956
+sent.
+received.
+recvBuffer: SeqNum: 15, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63051
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 15, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58955
+sent.
+received.
+recvBuffer: SeqNum: 19, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63047
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是19
+sent.
+number 0 state: 0, seq: 20
+number 1 state: 0, seq: 21
+number 2 state: 0, seq: 22
+number 3 state: 0, seq: 23
+number 4 state: 0, seq: 24
+number 5 state: 0, seq: 25
+number 6 state: 0, seq: 26
+number 7 state: 0, seq: 27
+number 8 state: 0, seq: 28
+number 9 state: 0, seq: 29
+number 10 state: 0, seq: 30
+number 11 state: 0, seq: 31
+number 12 state: 0, seq: 32
+number 13 state: 0, seq: 33
+number 14 state: 0, seq: 34
+number 15 state: 0, seq: 35
+
+received.
+recvBuffer: SeqNum: 20, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63046
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是20
+sent.
+number 0 state: 0, seq: 21
+number 1 state: 0, seq: 22
+number 2 state: 0, seq: 23
+number 3 state: 0, seq: 24
+number 4 state: 0, seq: 25
+number 5 state: 0, seq: 26
+number 6 state: 0, seq: 27
+number 7 state: 0, seq: 28
+number 8 state: 0, seq: 29
+number 9 state: 0, seq: 30
+number 10 state: 0, seq: 31
+number 11 state: 0, seq: 32
+number 12 state: 0, seq: 33
+number 13 state: 0, seq: 34
+number 14 state: 0, seq: 35
+number 15 state: 0, seq: 36
+
+received.
+recvBuffer: SeqNum: 21, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63045
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是21
+sent.
+number 0 state: 0, seq: 22
+number 1 state: 0, seq: 23
+number 2 state: 0, seq: 24
+number 3 state: 0, seq: 25
+number 4 state: 0, seq: 26
+number 5 state: 0, seq: 27
+number 6 state: 0, seq: 28
+number 7 state: 0, seq: 29
+number 8 state: 0, seq: 30
+number 9 state: 0, seq: 31
+number 10 state: 0, seq: 32
+number 11 state: 0, seq: 33
+number 12 state: 0, seq: 34
+number 13 state: 0, seq: 35
+number 14 state: 0, seq: 36
+number 15 state: 0, seq: 37
+
+received.
+recvBuffer: SeqNum: 12, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63054
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 12, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58958
+sent.
+received.
+recvBuffer: SeqNum: 22, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63044
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是22
+sent.
+number 0 state: 0, seq: 23
+number 1 state: 0, seq: 24
+number 2 state: 0, seq: 25
+number 3 state: 0, seq: 26
+number 4 state: 0, seq: 27
+number 5 state: 0, seq: 28
+number 6 state: 0, seq: 29
+number 7 state: 0, seq: 30
+number 8 state: 0, seq: 31
+number 9 state: 0, seq: 32
+number 10 state: 0, seq: 33
+number 11 state: 0, seq: 34
+number 12 state: 0, seq: 35
+number 13 state: 0, seq: 36
+number 14 state: 0, seq: 37
+number 15 state: 0, seq: 38
+
+received.
+recvBuffer: SeqNum: 23, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63043
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是23
+sent.
+number 0 state: 0, seq: 24
+number 1 state: 0, seq: 25
+number 2 state: 0, seq: 26
+number 3 state: 0, seq: 27
+number 4 state: 0, seq: 28
+number 5 state: 0, seq: 29
+number 6 state: 0, seq: 30
+number 7 state: 0, seq: 31
+number 8 state: 0, seq: 32
+number 9 state: 0, seq: 33
+number 10 state: 0, seq: 34
+number 11 state: 0, seq: 35
+number 12 state: 0, seq: 36
+number 13 state: 0, seq: 37
+number 14 state: 0, seq: 38
+number 15 state: 0, seq: 39
+
+received.
+recvBuffer: SeqNum: 24, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63042
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是24
+sent.
+number 0 state: 0, seq: 25
+number 1 state: 0, seq: 26
+number 2 state: 0, seq: 27
+number 3 state: 0, seq: 28
+number 4 state: 0, seq: 29
+number 5 state: 0, seq: 30
+number 6 state: 0, seq: 31
+number 7 state: 0, seq: 32
+number 8 state: 0, seq: 33
+number 9 state: 0, seq: 34
+number 10 state: 0, seq: 35
+number 11 state: 0, seq: 36
+number 12 state: 0, seq: 37
+number 13 state: 0, seq: 38
+number 14 state: 0, seq: 39
+number 15 state: 0, seq: 40
+
+received.
+recvBuffer: SeqNum: 26, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63040
+
+这是一个文件报文!
+匹配上了我们窗口里的1,它要的序列号是26
+sent.
+received.
+recvBuffer: SeqNum: 19, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63047
+
+这是一个文件报文!
+left of the window.
+sendBuffer: SeqNum: 0, AckNum: 19, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58951
+sent.
+received.
+recvBuffer: SeqNum: 27, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63039
+
+这是一个文件报文!
+匹配上了我们窗口里的2,它要的序列号是27
+sent.
+received.
+recvBuffer: SeqNum: 28, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63038
+
+这是一个文件报文!
+匹配上了我们窗口里的3,它要的序列号是28
+sent.
+received.
+recvBuffer: SeqNum: 29, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63037
+
+这是一个文件报文!
+匹配上了我们窗口里的4,它要的序列号是29
+sent.
+received.
+recvBuffer: SeqNum: 30, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63036
+
+这是一个文件报文!
+匹配上了我们窗口里的5,它要的序列号是30
+sent.
+received.
+recvBuffer: SeqNum: 25, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 63041
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是25
+sent.
+number 0 state: 1, seq: 26
+number 1 state: 1, seq: 27
+number 2 state: 1, seq: 28
+number 3 state: 1, seq: 29
+number 4 state: 1, seq: 30
+number 5 state: 0, seq: 31
+number 6 state: 0, seq: 32
+number 7 state: 0, seq: 33
+number 8 state: 0, seq: 34
+number 9 state: 0, seq: 35
+number 10 state: 0, seq: 36
+number 11 state: 0, seq: 37
+number 12 state: 0, seq: 38
+number 13 state: 0, seq: 39
+number 14 state: 0, seq: 40
+number 15 state: 0, seq: 41
+
+number 0 state: 1, seq: 27
+number 1 state: 1, seq: 28
+number 2 state: 1, seq: 29
+number 3 state: 1, seq: 30
+number 4 state: 0, seq: 31
+number 5 state: 0, seq: 32
+number 6 state: 0, seq: 33
+number 7 state: 0, seq: 34
+number 8 state: 0, seq: 35
+number 9 state: 0, seq: 36
+number 10 state: 0, seq: 37
+number 11 state: 0, seq: 38
+number 12 state: 0, seq: 39
+number 13 state: 0, seq: 40
+number 14 state: 0, seq: 41
+number 15 state: 0, seq: 42
+
+number 0 state: 1, seq: 28
+number 1 state: 1, seq: 29
+number 2 state: 1, seq: 30
+number 3 state: 0, seq: 31
+number 4 state: 0, seq: 32
+number 5 state: 0, seq: 33
+number 6 state: 0, seq: 34
+number 7 state: 0, seq: 35
+number 8 state: 0, seq: 36
+number 9 state: 0, seq: 37
+number 10 state: 0, seq: 38
+number 11 state: 0, seq: 39
+number 12 state: 0, seq: 40
+number 13 state: 0, seq: 41
+number 14 state: 0, seq: 42
+number 15 state: 0, seq: 43
+
+number 0 state: 1, seq: 29
+number 1 state: 1, seq: 30
+number 2 state: 0, seq: 31
+number 3 state: 0, seq: 32
+number 4 state: 0, seq: 33
+number 5 state: 0, seq: 34
+number 6 state: 0, seq: 35
+number 7 state: 0, seq: 36
+number 8 state: 0, seq: 37
+number 9 state: 0, seq: 38
+number 10 state: 0, seq: 39
+number 11 state: 0, seq: 40
+number 12 state: 0, seq: 41
+number 13 state: 0, seq: 42
+number 14 state: 0, seq: 43
+number 15 state: 0, seq: 44
+
+number 0 state: 1, seq: 30
+number 1 state: 0, seq: 31
+number 2 state: 0, seq: 32
+number 3 state: 0, seq: 33
+number 4 state: 0, seq: 34
+number 5 state: 0, seq: 35
+number 6 state: 0, seq: 36
+number 7 state: 0, seq: 37
+number 8 state: 0, seq: 38
+number 9 state: 0, seq: 39
+number 10 state: 0, seq: 40
+number 11 state: 0, seq: 41
+number 12 state: 0, seq: 42
+number 13 state: 0, seq: 43
+number 14 state: 0, seq: 44
+number 15 state: 0, seq: 45
+
