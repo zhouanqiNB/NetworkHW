@@ -34,32 +34,33 @@
 #include <io.h>
 
 #define BUFFER_SIZE 0xf000
-#define HEAD_SIZE 0x10
+#define HEAD_SIZE 0x14
 #define DATA_SIZE (BUFFER_SIZE-HEAD_SIZE)
 
 #pragma comment(lib, "ws2_32.lib")
 using namespace std;
 
-int fileNameLength;
+ofstream ccout;//用来输出过多的日志
+
 
 char sendBuffer[BUFFER_SIZE];
 char recvBuffer[BUFFER_SIZE];
 
 int sourcePort=1234;
 int destinationPort=1235;
-int sequenceNumber=0;
-bool fin=false;
-
+unsigned int sequenceNumber=0;
 
 string fileName;
-int fileLength;
+
+int fileNameLength; //名字的长度
 
 ofstream fout;
 
+int ackNum=0;   //这次收到的是什么包
 
 void setPort();
-void setSeqNum(int& num);
-void setAckNum(int num);
+void setSeqNum(unsigned int num);
+void setAckNum(unsigned int num);
 void setSize(int num);
 void setAckBit(char a);
 void setSynBit(char a);
@@ -67,18 +68,20 @@ void setFinBit(char a);
 unsigned short calCheckSum(unsigned short* buf) ;//计算校验和
 void setCheckSum();
 
-ofstream ccout;
+// 用于设置套接字
+void makeSocket();
+
 
 // getters 之所以传参char* 是因为也要输出sendBuffer.
 class Getter{
 public:
-    int getSeqNum(char* recvBuffer){
-        int a=(recvBuffer[7]<<24)+(recvBuffer[6]<<16)+(recvBuffer[5]<<8)+recvBuffer[4];
-        return a;
+    unsigned int getSeqNum(char* recvBuffer){
+        unsigned int a=((recvBuffer[7]&0xff)<<24)+((recvBuffer[6]&0xff)<<16)+((recvBuffer[5]&0xff)<<8)+(recvBuffer[4]&0xff);
+        return a&0xffff;
     }
-    int getAckNum(char* recvBuffer){
-        int a=(recvBuffer[11]<<24)+(recvBuffer[10]<<16)+(recvBuffer[9]<<8)+recvBuffer[8];
-        return a;
+    unsigned int getAckNum(char* recvBuffer){
+        unsigned int a=((recvBuffer[11]&0xff)<<24)+((recvBuffer[10]&0xff)<<16)+((recvBuffer[9]&0xff)<<8)+(recvBuffer[8]&0xff);
+        return a&0xffff;
     }
     int getSize(char* recvBuffer){
         int a=recvBuffer[12];
@@ -103,14 +106,16 @@ public:
         int a=(recvBuffer[15]<<8)+recvBuffer[14];
         return a;
     }
+    unsigned int getBufferSize(char* recvBuffer){
+        unsigned int a=((recvBuffer[19]&0xff)<<24)+((recvBuffer[18]&0xff)<<16)+((recvBuffer[17]&0xff)<<8)+(recvBuffer[16]&0xff);
+        return a&0xffff;
+    }
 } getter;
 
 
 
-void packSynDatagram(int sequenceNumber);
 void packSynAckDatagram();
-void packAckDatagram(int expectedNum);
-void packAckFin(int expectedNum);
+void packAckDatagram(int ackNum);
 void packEmptyDatagram();
 
 void printLogSendBuffer();
@@ -120,40 +125,16 @@ bool checkSumIsRight();
 
 void getFileName();
 
-void printBindingErr();
-void printLibErr();
-void printCreateSocketErr();
-void printFileErr();
-void printRTOErr();
-
-
-SOCKET sockSrv;
-SOCKADDR_IN addrSrv;
-SOCKADDR_IN addrClient;   //用来接收客户端的地址信息
-int len;
-
-int expectedNum=0;
-
-void recvDatagram();
-void makeSocket();
-
 class SendGrid{
 public:
     /**
-     * state==0：这个窗口没被使用
-     * state==1：这个窗口被占用了，已经发送了，但没收到ack，收到ack后转为2，
-     *           超时还没有收到ack就重传。如果转2的那个窗口是最左侧的，移动滑动窗口。
-     * state==2：发了而且收到ack了，只要左侧的都好了就可以提交并且清空内容。
+     * state==0：这个窗口对应的序列号没收到
+     * state==1：这个窗口已经匹配上了
      */
-    int state;
-    int seq;
-    // Timer timer;
-    char buffer[BUFFER_SIZE];
-    bool timerIsActive;
-    clock_t start;//这个包被发出去的时间
+    int state;  //如果已经收到了,move.
+    int seq;    //这个窗口对应的序列号
+    char buffer[BUFFER_SIZE];   //该序列号的包
     SendGrid():state(0),seq(-1){};
-    void setState(int a){state=a;}
-    void setSeq(int a){seq=a;}
     void setBuffer(char* sendBuffer){
         for(int i=0;i<BUFFER_SIZE;i++){
             buffer[i]=sendBuffer[i];
@@ -170,15 +151,28 @@ public:
         if(sendGrid[0].state==1){//如果最左侧已经ack了，需要写回。
             cout<<"move"<<endl;
             // 写数据
-
-            cout<<"will write"<<sendGrid[0].seq<<endl;
-            fout.write(&sendGrid[0].buffer[HEAD_SIZE+fileNameLength],DATA_SIZE);
-
-            cout<<"writen"<<endl;
-            if(sendGrid[0].seq==30){
-                exit(0);
-                cout<<"我退出了"<<endl;
+            if(sendGrid[0].seq==0){
+                fileNameLength=getter.getSize(sendGrid[0].buffer);
             }
+            else{
+                fileNameLength=0;
+            }
+            
+            unsigned int bufferSize=getter.getBufferSize(sendGrid[0].buffer);
+            cout<<"bufferSize:"<<bufferSize<<endl;
+            fout.write(&sendGrid[0].buffer[HEAD_SIZE+fileNameLength],bufferSize);
+
+            cout<<"写了包 seq"<<sendGrid[0].seq<<endl;
+            if(getter.getFinBit(sendGrid[0].buffer)){
+                cout<<"我读完了，关文件了！"<<endl;
+                fout.close();
+            }
+            // int tmp;
+            // // cin>>tmp;
+            // if(sendGrid[0].seq==100){
+            //     exit(0);
+            //     cout<<"我退出了"<<endl;
+            // }
 
             for(int i=1;i<16;i++){
                 sendGrid[i-1].state=sendGrid[i].state;
@@ -187,8 +181,8 @@ public:
                     sendGrid[i-1].buffer[j]=sendGrid[i].buffer[j];
                 }
             }
-            sendGrid[15].setState(0);//最右边的格子seq++
-            sendGrid[15].setSeq(sendGrid[14].seq+1);
+            sendGrid[15].state=0;//最右边的格子seq++
+            sendGrid[15].seq=sendGrid[14].seq+1;
             for(int j=0;j<BUFFER_SIZE;j++){
                 sendGrid[15].buffer[j]=0;
             }
@@ -199,33 +193,29 @@ public:
             this->move();
         }
     }
+    // 用于debug
     void printWindow(){
         for(int i=0;i<16;i++){
             ccout<<"number "<<i<<" state: "<<sendGrid[i].state<<", seq: "<<sendGrid[i].seq<<endl;
         }
         ccout<<endl;
     }
-    bool haveGridLeft(){
-        if(sendGrid[15].state!=0){
-            return false;
-        }
-        else{
-            return true;
-        }
-    }
-    int getEmptyGrid(){
-        for(int i=0;i<16;i++){
-            if(sendGrid[i].state==0){
-                return i;
-            }
-        }
-    }
 } win;
+
+
+SOCKET sockSrv;
+SOCKADDR_IN addrSrv;
+SOCKADDR_IN addrClient;   //用来接收客户端的地址信息
+int len;
+
+
+// 用于接收报文
+void recvDatagram();
+
 
 
 int main(){
     ccout.open("server.txt");
-    ccout<<"==============================================================================="<<endl;
     //加载套接字库
     WSADATA wsaData;
     WSAStartup(MAKEWORD(1, 1), &wsaData);
@@ -246,22 +236,6 @@ int main(){
 
 
 
-void makeSocket(){
-    //创建用于监听的套接字
-    sockSrv = socket(AF_INET, SOCK_DGRAM, 0);//失败会返回 INVALID_SOCKET
-    // SOCKADDR_IN addrSrv;
-    addrSrv.sin_addr.s_addr = inet_addr("127.0.0.1");//输入你想通信的她（此处是本机内部）
-    addrSrv.sin_family = AF_INET;
-    addrSrv.sin_port = htons(1366);
-
-    //绑定套接字, 绑定到端口
-    bind(sockSrv, (SOCKADDR*)&addrSrv, sizeof(SOCKADDR));//会返回一个SOCKET_ERROR
-
-    // SOCKADDR_IN addrClient;   //用来接收客户端的地址信息
-    len = sizeof(SOCKADDR);
-    ccout<<"listening..."<<endl;
-}
-
 void recvDatagram(){
 
     //建立连接，接收数据，判断数据校验和，回应报文
@@ -277,7 +251,7 @@ void recvDatagram(){
             //如果校验和没问题就返回一个SYN ACK报文，否则返回空报文
             if(checkSumIsRight()){
                 // SYN报文协商起始的序列号。
-                expectedNum=getter.getSeqNum(recvBuffer);
+                ackNum=getter.getSeqNum(recvBuffer);
                 setAckNum(getter.getSeqNum(recvBuffer));
                 packSynAckDatagram();
                 sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
@@ -324,7 +298,6 @@ void recvDatagram(){
                         ccout<<"匹配上了我们窗口里的"<<i<<",它要的序列号是"<<win.sendGrid[i].seq<<endl;
                         // 1表示已经ack了
                         win.sendGrid[i].state=1;
-                        cout<<"把收到的第"<<getter.getSeqNum(recvBuffer)<<"个包写进buffer"<<endl;
                         for(int j=0;j<BUFFER_SIZE;j++){
                             win.sendGrid[i].buffer[j]=recvBuffer[j];
                         }
@@ -337,7 +310,7 @@ void recvDatagram(){
                             ccout<<"file receiving ends."<<endl;
                         }
                         sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
-                        // printLogSendBuffer();
+                        printLogSendBuffer();
                         ccout<<"sent."<<endl;
 
 
@@ -367,7 +340,7 @@ void recvDatagram(){
                         continue;
                     }
 
-                    ccout<<"not expectedNum!"<<endl;
+                    ccout<<"not in window!"<<endl;
                 }
                 win.move();
             }
@@ -381,10 +354,30 @@ void recvDatagram(){
     }    
 }
 
+
+//##################################### Utils #####################################//
+
+void makeSocket(){
+    //创建用于监听的套接字
+    sockSrv = socket(AF_INET, SOCK_DGRAM, 0);//失败会返回 INVALID_SOCKET
+    // SOCKADDR_IN addrSrv;
+    addrSrv.sin_addr.s_addr = inet_addr("127.0.0.1");//输入你想通信的她（此处是本机内部）
+    addrSrv.sin_family = AF_INET;
+    addrSrv.sin_port = htons(1366);
+
+    //绑定套接字, 绑定到端口
+    bind(sockSrv, (SOCKADDR*)&addrSrv, sizeof(SOCKADDR));//会返回一个SOCKET_ERROR
+
+    // SOCKADDR_IN addrClient;   //用来接收客户端的地址信息
+    len = sizeof(SOCKADDR);
+    ccout<<"listening..."<<endl;
+}
 void getFileName(){
     ccout<<"Tell me which file you want to send.\n";
     cin>>fileName;
 }
+
+//##################################### Utils #####################################//
 
 //##################################### Setters #####################################//
 
@@ -396,7 +389,7 @@ void setPort(){
     sendBuffer[2]=destinationPort&0xff;
 }
 
-void setSeqNum(int& num){
+void setSeqNum(unsigned int num){
     // 如果序列号超出范围，取模。
     if(num>0xffffffff){
         num%=0xffffffff;
@@ -407,7 +400,7 @@ void setSeqNum(int& num){
     sendBuffer[4]=num&0xff;
 }
 
-void setAckNum(int num){
+void setAckNum(unsigned int num){
     if(num>0xffffffff){
         num%=0xffffffff;
     }
@@ -521,14 +514,7 @@ bool checkSumIsRight(){
 
 //##################################### DataPack #####################################//
 
-void packSynDatagram(int sequenceNumber){
-    setPort();
-    setSeqNum(sequenceNumber);
-    setSynBit(1);
-    setAckBit(0);
-    setFinBit(0);
-    setCheckSum();
-}
+
 
 void packSynAckDatagram(){
     setPort();
@@ -539,23 +525,14 @@ void packSynAckDatagram(){
     setCheckSum();
 }
 
-void packAckDatagram(int expectedNum){
+//事实上已经改成了ackNum，而不是expectedNum，但没改名字
+void packAckDatagram(int ackNum){
     setPort();
     setSeqNum(sequenceNumber);
-    setAckNum(expectedNum);
+    setAckNum(ackNum);
     setSynBit(0);
     setAckBit(1);
     setFinBit(0);
-    setCheckSum();
-}
-
-void packAckFin(int expectedNum){
-    setPort();
-    setSeqNum(sequenceNumber);
-    setAckNum(expectedNum);
-    setSynBit(0);
-    setAckBit(1);
-    setFinBit(1);
     setCheckSum();
 }
 
@@ -596,38 +573,3 @@ void printLogRecvBuffer(){
 }
 
 //##################################### LogPrint #####################################//
-
-
-//##################################### ErrorPrint #####################################//
-
-void printBindingErr(){
-    ccout << "+-------------------------------+\n" ;
-    ccout << "| We met problems when binding. |\n" ;
-    ccout << "+-------------------------------+\n" ;
-}
-
-void printLibErr(){
-    ccout << "+------------------------------------+\n" ;
-    ccout << "| We met problems when loading libs. |\n" ;
-    ccout << "+------------------------------------+\n" ;            
-}
-
-void printCreateSocketErr(){
-    ccout << "+--------------------------------+\n" ;
-    ccout << "| We cannot create a new socket. |\n" ;
-    ccout << "+--------------------------------+\n" ;            
-}
-
-void printFileErr(){
-    ccout << "+--------------------------------+\n";
-    ccout << "| Sorry we cannot open the file. |\n";
-    ccout << "+--------------------------------+\n";                
-}
-
-void printRTOErr(){
-    ccout << "+------------------------------------------+\n";
-    ccout << "| Over RTO. The server did not respond us. |\n";
-    ccout << "+------------------------------------------+\n";
-}
-
-//##################################### ErrorPrint #####################################//

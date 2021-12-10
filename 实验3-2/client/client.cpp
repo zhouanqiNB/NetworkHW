@@ -33,6 +33,8 @@
  * +---------+--+-+-+-+-+-+-+------------------------+
  * |  size   |  |U|A|P|R|S|F|       checkSum         |
  * +---------+--+-+-+-+-+-+-+------------------------+
+ * | bufferSize                                      |
+ * +-------------------------------------------------+
  * 
  * 这里的size没用上，所以用来放文件名的长度，设置了8bit所以可以表示2^8个数字。
  * 
@@ -57,52 +59,65 @@
 #include <cmath>
 
 #define BUFFER_SIZE 0xf000
-#define HEAD_SIZE 0x10
+#define HEAD_SIZE 0x14
 #define DATA_SIZE (BUFFER_SIZE-HEAD_SIZE)
 
 #pragma comment(lib, "ws2_32.lib")
 using namespace std;
 
-ofstream ccout;
+ofstream ccout;//用来输出过多的日志
 
 char sendBuffer[BUFFER_SIZE];
 char recvBuffer[BUFFER_SIZE];
 
-long bytesHaveSent=0;
-
 int sourcePort=1234;
 int destinationPort=1235;
-int sequenceNumber=0;
+unsigned int sequenceNumber=0;
 
-bool isFirstPackage=true;
+string fileName;    //文件名称  
+int fileLength;     //文件长度，用于计算sendTimes和最后一个包的大小。
 
-string fileName;
-int fileLength;
+bool isFirstPackage=true;   //如果是第一个包需要发名称
+
+long bytesHaveSent=0;   //一共发送了多少字节，用于统计
+int bytesHaveWritten; //加到bytesHaveSent里面，用于统计
+int t_start;    //开始发送文件的时间，用于统计
+
+ifstream fin;   //用于读文件
+int bytesHaveRead;  //已经读到文件的哪里，用于读文件
+int leftDataSize;   //这个包还剩多少DATA空间，用于读文件
+
+int nowTime;    //现在已经有多少个被成功ack了，用于判断何时停止
+int sendTimes;  //这个文件需要发送多少次
 
 void setPort();
-void setSeqNum(int& num);
-void setAckNum(int num);
+void setSeqNum(unsigned int num);
+void setAckNum(unsigned int num);
 void setSize(int num);
 void setAckBit(char a);
 void setSynBit(char a);
 void setFinBit(char a);
-
-// 计算校验和
-unsigned short calCheckSum(unsigned short* buf) ;
-
+unsigned short calCheckSum(unsigned short* buf) ;// 计算校验和
 void setCheckSum();
+void setBufferSize(unsigned int num);
 
-// getters 之所以传参char* 是因为我debug的时候也要输出sendBuffer.
+// 用于设置套接字
+void makeSocket();
+
+void setRTO();
+void findFile();
+
+
 class Getter{
 public:
-	int getSeqNum(char* recvBuffer){
-	    int a=(recvBuffer[7]<<24)+(recvBuffer[6]<<16)+(recvBuffer[5]<<8)+recvBuffer[4];
-	    return a;
-	}
-	int getAckNum(char* recvBuffer){
-	    int a=(recvBuffer[11]<<24)+(recvBuffer[10]<<16)+(recvBuffer[9]<<8)+recvBuffer[8];
-	    return a;
-	}
+    unsigned int getSeqNum(char* recvBuffer){
+        unsigned int a=((recvBuffer[7]&0xff)<<24)+((recvBuffer[6]&0xff)<<16)+((recvBuffer[5]&0xff)<<8)+(recvBuffer[4]&0xff);
+        return a&0xffff;
+    }
+    unsigned int getAckNum(char* recvBuffer){
+        unsigned int a=((recvBuffer[11]&0xff)<<24)+((recvBuffer[10]&0xff)<<16)+((recvBuffer[9]&0xff)<<8)+(recvBuffer[8]&0xff);
+        return a&0xffff;
+    }
 	int getSize(char* recvBuffer){
 	    int a=recvBuffer[12];
 	    return a;
@@ -126,29 +141,28 @@ public:
 	    int a=(recvBuffer[15]<<8)+recvBuffer[14];
 	    return a;
 	}
+    unsigned int getBufferSize(char* recvBuffer){
+        unsigned int a=((recvBuffer[19]&0xff)<<24)+((recvBuffer[18]&0xff)<<16)+((recvBuffer[17]&0xff)<<8)+(recvBuffer[16]&0xff);
+        return a&0xffff;
+    }
 } getter;
 
+
 void packSynDatagram(int sequenceNumber);
-void packSynAckDatagram();
-void packAckDatagram();
 void packFirst();
-void packEmptyDatagram();
 void packData();
 
 void printLogSendBuffer();
 void printLogRecvBuffer();
 
 bool checkSumIsRight();
+
 void getFileName();
 
-void printBindingErr();
-void printLibErr();
-void printCreateSocketErr();
 void printFileErr();
 void printRTOErr();
 
-int bytesHaveRead;
-int leftDataSize;
+
 // 一个格子对应着一个序列号和一个状态
 class SendGrid{
 public:
@@ -158,22 +172,18 @@ public:
      *           超时还没有收到ack就重传。如果转2的那个窗口是最左侧的，移动滑动窗口。
      * state==2：发了而且收到ack了，只要左侧的都好了就可以提交并且清空内容。
      */
-    int state;
-    int seq;
-    // Timer timer;
-    char buffer[BUFFER_SIZE];
+    int state;  //用于判断格子的状态
+    int seq;    //格子的序列号是
+    char buffer[BUFFER_SIZE];   //此序列号的sendbuffer
     clock_t start;//这个包被发出去的时间
     SendGrid():state(0),seq(-1){};
-    void setState(int a){state=a;}
-    void setSeq(int a){seq=a;}
     void setBuffer(char* sendBuffer){
         for(int i=0;i<BUFFER_SIZE;i++){
             buffer[i]=sendBuffer[i];
         }
     }
 };
-int nowTime;
-int sendTimes;
+
 
 // 一个窗口大小是16
 class SendWindow{
@@ -192,13 +202,19 @@ public:
                     sendGrid[i-1].buffer[j]=sendGrid[i].buffer[j];
                 }
             }
-            sendGrid[15].setState(0);//最右边的格子重新空闲
-            sendGrid[15].setSeq(sendGrid[14].seq+1);
+            sendGrid[15].state=0;//最右边的格子重新空闲
+            sendGrid[15].seq=sendGrid[14].seq+1;
             ccout<<"我移动了窗口！"<<endl;
             // printWindow();
-            cout<<nowTime<<" "<<sendTimes<<endl;
+            cout<<"现在是发送的第"<<nowTime<<"/"<<sendTimes<<"个包。"<<endl;
             if(nowTime==sendTimes){
                 cout<<"发完了我溜了"<<endl;
+                int t=clock()-t_start;
+                cout<<"发送的字节数："<<bytesHaveSent<<".\n";
+                cout<<"使用时间： "<<t<<"ms.\n";
+
+                cout<<"吞吐率："<<bytesHaveSent * 8 / (t - t_start) * CLOCKS_PER_SEC<<"bps\n";
+
                 exit(0);
             }
             printWindow();
@@ -206,52 +222,44 @@ public:
                 this->move();
         }
     }
+    // 用于debug
     void printWindow(){
         for(int i=0;i<16;i++){
             ccout<<"number "<<i<<" state: "<<sendGrid[i].state<<", seq: "<<sendGrid[i].seq<<endl;
         }
         ccout<<endl;
     }
-    bool haveGridLeft(){
-        if(sendGrid[15].state!=0){
-            return false;
-        }
-        else{
-            return true;
-        }
-    }
-    int getEmptyGrid(){
-        for(int i=0;i<16;i++){
-            if(sendGrid[i].state==0){
-                return i;
-            }
-        }
-    }
 } win;
+
 
 SOCKET sockSrv;
 SOCKADDR_IN  addrServer;
 SOCKADDR_IN  addrClient;
 int len;
-struct timeval timeout;
 
-HANDLE hMutex = NULL;//互斥量
-ifstream fin;
+struct timeval timeout; //超时
 
-int bytesHaveWritten; //加到bytesHaveSent里面。
+HANDLE hMutex = NULL;//互斥量，用于多线程
 
-void sendSynDatagram();
-void sendFileDatagram();
-void makeSocket();
-void setRTO();
-void findFile();
-DWORD WINAPI ackReader(LPVOID lpParamter);
+
+
+// 发送报文的执行
 void sendData(int i);
 void resendData(int i);
 
+// 多线程之接收对方的ack
+DWORD WINAPI ackReader(LPVOID lpParamter);
+
+// 发送报文的逻辑
+void sendFileDatagram();
+void sendSynDatagram();
+
+
+
+
+
 int main(){
     ccout.open("client.txt");
-    ccout<<"==============================================================================="<<endl;
 
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(1, 1), &wsaData);
@@ -262,51 +270,23 @@ int main(){
     sendSynDatagram();
     sendFileDatagram();
 
+
     closesocket(sockSrv);
     WSACleanup();
     return 0;
 }
-void setRTO(){
-    timeout.tv_sec = 2000;
-    timeout.tv_usec = 0;   
 
-    setsockopt(sockSrv, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
-    ccout << "We successfully set the RTO." << endl;    
-}
 
-void makeSocket(){
-    //创建用于监听的套接字
-    sockSrv = socket(AF_INET, SOCK_DGRAM, 0);
-    // SOCKADDR_IN  addrServer;
-    addrServer.sin_addr.s_addr = inet_addr("127.0.0.1");
-    addrServer.sin_family = AF_INET;
-    addrServer.sin_port = htons(1366);
 
-    // SOCKADDR_IN  addrClient;
-    len = sizeof(SOCKADDR);
-}
 
-void findFile(){
-    fin.open(fileName, ifstream::in | ios::binary);
-    fin.seekg(0, fin.end);              //把指针定位到末尾
-    fileLength = fin.tellg();           //获取指针
-    fin.seekg(0, fin.beg);              //将文件流指针重新定位到流的开始
 
-    if (fileLength <= 0) {
-        printFileErr();
+
+void sendData(int i){
+    if(sequenceNumber==sendTimes){
         return;
     }
-    ccout<<"The size of this file is "<<fileLength<<" bytes.\n";
-    
-    // ccout<<"fileLength: "<<fileLength<<endl;
-    // ccout<<"fileName.length(): "<<fileName.length()<<endl;
-    // ccout<<"DATA_SIZE: "<<DATA_SIZE<<endl;
-    sendTimes = ceil(((double)fileLength+(double)fileName.length() )/(double)DATA_SIZE);     //需要发送这么多次
-    ccout << "We will split this file to " << sendTimes << " packages and send it." << endl;
-
-}
-void sendData(int i){
     ccout<<"我要设置win"<<i<<"的seq为"<<sequenceNumber<<endl;
+    cout<<"\n我要设置win"<<i<<"的seq为"<<sequenceNumber<<endl;
 
     win.sendGrid[i].seq=sequenceNumber;
     if(sequenceNumber>=sendTimes){
@@ -334,14 +314,25 @@ void sendData(int i){
         sequenceNumber++;
 
     }
+    cout<<"bytesHaveRead: "<<bytesHaveRead<<endl;
+    cout<<"读的包的序号是: "<<win.sendGrid[i].seq<<endl;
     fin.seekg(bytesHaveRead,fin.beg);
     int sendSize = min(leftDataSize, fileLength-bytesHaveRead); //如果是最后一个包的话可能会不满。
+    cout<<"leftDataSize: "<<leftDataSize<<endl;
+    cout<<"fileLength-bytesHaveRead: "<<fileLength-bytesHaveRead<<endl;
+    cout<<"sendSize: "<<sendSize<<endl;
 
     fin.read(&sendBuffer[HEAD_SIZE + (DATA_SIZE - leftDataSize)], sendSize);// sendBuffer从什么地方开始读起，读多少
     bytesHaveRead += sendSize;
     bytesHaveWritten += sendSize;
 
-
+    setBufferSize(sendSize);
+    setCheckSum();
+    cout<<"setBufferSize"<<getter.getBufferSize(sendBuffer)<<endl;
+    if(win.sendGrid[i].seq==sendTimes-1){
+        setFinBit(1);
+        setCheckSum();
+    }
     sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrServer, len);
     ccout<<"发送了"<<sequenceNumber-1<<endl;
 
@@ -350,22 +341,26 @@ void sendData(int i){
         win.sendGrid[i].buffer[j]=sendBuffer[j];
     }
 
-    bytesHaveSent+=bytesHaveWritten;
-    ccout<<"\nbytesHaveSent: "<<bytesHaveSent<<endl;
+    bytesHaveSent+=getter.getBufferSize(win.sendGrid[i].buffer);
+    cout<<"bytesHaveSent: "<<bytesHaveSent<<endl;
     // printLogSendBuffer();
     ccout<<"sent."<<endl;
     memset(sendBuffer, 0, sizeof(sendBuffer));
+    bytesHaveWritten=0;
 }
 void resendData(int i){
+
     for(int j=0;j<BUFFER_SIZE;j++){
         sendBuffer[j]=win.sendGrid[i].buffer[j];
     } 
     sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrServer, len);
-    cout<<"重新发了"<<i<<"号"<<endl;
+    cout<<"重新发了"<<i<<"号 seq: "<<win.sendGrid[i].seq<<endl;
     printLogSendBuffer();
+    bytesHaveSent+=getter.getBufferSize(win.sendGrid[i].buffer);
+    cout<<"bytesHaveSent:"<<bytesHaveSent<<endl;
     ccout<<sequenceNumber<<" resent."<<endl;
-
 }
+
 DWORD WINAPI ackReader(LPVOID lpParamter){
 
     while(1){
@@ -422,9 +417,7 @@ DWORD WINAPI ackReader(LPVOID lpParamter){
         ReleaseMutex(hMutex);
 
     }
-
 }
-
 
 void sendFileDatagram(){
     getFileName();
@@ -432,7 +425,7 @@ void sendFileDatagram(){
     // 根据文件名读入文件，计算文件长度和sendTimes
     findFile();
 
-    int t_start=clock();
+    t_start=clock();
     sequenceNumber=0;
 
     bytesHaveRead=0;    //数据指针
@@ -537,10 +530,59 @@ void sendSynDatagram(){
     }
 }
 
+
+
+
+
+//##################################### Utils #####################################//
+
+void findFile(){
+    fin.open(fileName, ifstream::in | ios::binary);
+    fin.seekg(0, fin.end);              //把指针定位到末尾
+    fileLength = fin.tellg();           //获取指针
+    fin.seekg(0, fin.beg);              //将文件流指针重新定位到流的开始
+
+    if (fileLength <= 0) {
+        printFileErr();
+        return;
+    }
+    ccout<<"The size of this file is "<<fileLength<<" bytes.\n";
+    cout<<"The size of this file is "<<fileLength<<" bytes.\n";
+    
+    // ccout<<"fileLength: "<<fileLength<<endl;
+    // ccout<<"fileName.length(): "<<fileName.length()<<endl;
+    // ccout<<"DATA_SIZE: "<<DATA_SIZE<<endl;
+    sendTimes = ceil(((double)fileLength+(double)fileName.length() )/(double)DATA_SIZE);     //需要发送这么多次
+    ccout << "We will split this file to " << sendTimes << " packages and send it." << endl;
+    cout << "We will split this file to " << sendTimes << " packages and send it." << endl;
+}
+
+void makeSocket(){
+    //创建用于监听的套接字
+    sockSrv = socket(AF_INET, SOCK_DGRAM, 0);
+    // SOCKADDR_IN  addrServer;
+    addrServer.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addrServer.sin_family = AF_INET;
+    addrServer.sin_port = htons(1366);
+
+    // SOCKADDR_IN  addrClient;
+    len = sizeof(SOCKADDR);
+}
+
 void getFileName(){
     std::cout<<"Tell me which file you want to send.\n";
     cin>>fileName;
 }
+
+void setRTO(){
+    timeout.tv_sec = 2000;
+    timeout.tv_usec = 0;   
+
+    setsockopt(sockSrv, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+    ccout << "We successfully set the RTO." << endl;    
+}
+//##################################### Utils #####################################//
+
 
 //##################################### Setters #####################################//
 
@@ -552,7 +594,7 @@ void setPort(){
     sendBuffer[2]=destinationPort&0xff;
 }
 
-void setSeqNum(int& num){
+void setSeqNum(unsigned int num){
     // 如果序列号超出范围，取模。
     if(num>0xffffffff){
         num%=0xffffffff;
@@ -563,7 +605,7 @@ void setSeqNum(int& num){
     sendBuffer[4]=num&0xff;
 }
 
-void setAckNum(int num){
+void setAckNum(unsigned int num){
     if(num>0xffffffff){
         num%=0xffffffff;
     }
@@ -614,6 +656,18 @@ void setFinBit(char a){
         // 0000 0001
         sendBuffer[13] |=0x01;
     }
+}
+
+void setBufferSize(unsigned int num){
+    cout<<num<<endl;
+    if(num>0xffffffff){
+        num%=0xffffffff;
+    }
+    sendBuffer[19]=(num>>24)&0xff;
+    sendBuffer[18]=(num>>16)&0xff;
+    sendBuffer[17]=(num>>8)&0xff;
+    sendBuffer[16]=num&0xff;
+    // getter.getBufferSize(sendBuffer);
 }
 
 //##################################### Setters #####################################//
@@ -686,32 +740,6 @@ void packSynDatagram(int sequenceNumber){
     setCheckSum();
 }
 
-void packSynAckDatagram(){
-    setPort();
-    setSeqNum(sequenceNumber);
-    setSynBit(1);
-    setAckBit(1);
-    setFinBit(0);
-    setCheckSum();
-}
-
-void packAckDatagram(){
-    setPort();
-    setSeqNum(sequenceNumber);
-    setSynBit(0);
-    setAckBit(1);
-    setFinBit(0);
-    setCheckSum();
-}
-
-void packEmptyDatagram(){
-    setPort();
-    setSeqNum(sequenceNumber);
-    setSynBit(0);
-    setAckBit(0);
-    setFinBit(0);
-    setCheckSum();
-}
 
 void packFirst(){
     setPort();
@@ -766,23 +794,7 @@ void printLogRecvBuffer(){
 
 //##################################### ErrorPrint #####################################//
 
-void printBindingErr(){
-    ccout << "+-------------------------------+\n" ;
-    ccout << "| We met problems when binding. |\n" ;
-    ccout << "+-------------------------------+\n" ;
-}
 
-void printLibErr(){
-    ccout << "+------------------------------------+\n" ;
-    ccout << "| We met problems when loading libs. |\n" ;
-    ccout << "+------------------------------------+\n" ;            
-}
-
-void printCreateSocketErr(){
-    ccout << "+--------------------------------+\n" ;
-    ccout << "| We cannot create a new socket. |\n" ;
-    ccout << "+--------------------------------+\n" ;            
-}
 
 void printFileErr(){
     ccout << "+--------------------------------+\n";
