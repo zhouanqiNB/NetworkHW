@@ -167,12 +167,6 @@ public:
                 cout<<"我读完了，关文件了！"<<endl;
                 fout.close();
             }
-            // int tmp;
-            // // cin>>tmp;
-            // if(sendGrid[0].seq==100){
-            //     exit(0);
-            //     cout<<"我退出了"<<endl;
-            // }
 
             for(int i=1;i<16;i++){
                 sendGrid[i-1].state=sendGrid[i].state;
@@ -250,6 +244,10 @@ void recvDatagram(){
             
             //如果校验和没问题就返回一个SYN ACK报文，否则返回空报文
             if(checkSumIsRight()){
+                for(int i=0;i<16;i++){
+                    win.sendGrid[i].seq=i;
+                    win.sendGrid[i].state=0;
+                }
                 // SYN报文协商起始的序列号。
                 ackNum=getter.getSeqNum(recvBuffer);
                 setAckNum(getter.getSeqNum(recvBuffer));
@@ -273,29 +271,32 @@ void recvDatagram(){
             ccout<<"\n这是一个文件报文!"<<endl;
 
             if(checkSumIsRight()){
-                //如果校验和没问题就返回一个ACK报文+expected序列号，否则上次的ACK再发一遍
+                //如果校验和没问题就返回一个ACK报文+序列号
                 //（这里是默认SYN只发一遍，之后的全部都是File）
 
-                // 如果是第一个，开一下文件
-                if(getter.getSize(recvBuffer)!=0){
-                    ccout<<"这是第一个包，我要开始写了。"<<endl;
-                    fileName="";
-                    fileNameLength=getter.getSize(recvBuffer);
-                    cout<<"文件名长度"<<fileNameLength<<endl;
-                    ccout<<"我获取了文件的名称"<<endl;
 
-                    for(int i=0;i<getter.getSize(recvBuffer);i++){
-                        fileName+=recvBuffer[HEAD_SIZE+i];
-                    }
-                    ccout<<"fileName: "<<fileName<<endl;
-                    fout.open(fileName,ios_base::out | ios_base::app | ios_base::binary);
-
-                }
                 int i=0;
                 for(;i<16;i++){
                     // 如果匹配上了
                     if(getter.getSeqNum(recvBuffer)==win.sendGrid[i].seq){
                         ccout<<"匹配上了我们窗口里的"<<i<<",它要的序列号是"<<win.sendGrid[i].seq<<endl;
+
+                        // 如果是第一个，开一下文件
+                        if(getter.getSize(recvBuffer)!=0){
+                            ccout<<"这是第一个包，我要开始写了。"<<endl;
+                            fileName="";
+                            fileNameLength=getter.getSize(recvBuffer);
+                            cout<<"文件名长度"<<fileNameLength<<endl;
+                            ccout<<"我获取了文件的名称"<<endl;
+
+                            for(int i=0;i<getter.getSize(recvBuffer);i++){
+                                fileName+=recvBuffer[HEAD_SIZE+i];
+                            }
+                            ccout<<"fileName: "<<fileName<<endl;
+                            fout.open(fileName,ios_base::out | ios_base::app | ios_base::binary);
+
+                        }
+
                         // 1表示已经ack了
                         win.sendGrid[i].state=1;
                         for(int j=0;j<BUFFER_SIZE;j++){
@@ -306,13 +307,11 @@ void recvDatagram(){
                         if(getter.getFinBit(recvBuffer)){//如果收到了fin，挥手。
                             setFinBit(1);
                             setCheckSum();
-                            fout.close();
                             ccout<<"file receiving ends."<<endl;
                         }
                         sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
                         printLogSendBuffer();
                         ccout<<"sent."<<endl;
-
 
                         break;
                     }

@@ -33,7 +33,7 @@
  * +---------+--+-+-+-+-+-+-+------------------------+
  * |  size   |  |U|A|P|R|S|F|       checkSum         |
  * +---------+--+-+-+-+-+-+-+------------------------+
- * | bufferSize                                      |
+ * |                   bufferSize                    |
  * +-------------------------------------------------+
  * 
  * 这里的size没用上，所以用来放文件名的长度，设置了8bit所以可以表示2^8个数字。
@@ -80,14 +80,14 @@ int fileLength;     //文件长度，用于计算sendTimes和最后一个包的�
 bool isFirstPackage=true;   //如果是第一个包需要发名称
 
 long bytesHaveSent=0;   //一共发送了多少字节，用于统计
-int bytesHaveWritten; //加到bytesHaveSent里面，用于统计
+int bytesHaveWritten=0; //加到bytesHaveSent里面，用于统计
 int t_start;    //开始发送文件的时间，用于统计
 
 ifstream fin;   //用于读文件
-int bytesHaveRead;  //已经读到文件的哪里，用于读文件
+int bytesHaveRead=0;  //已经读到文件的哪里，用于读文件
 int leftDataSize;   //这个包还剩多少DATA空间，用于读文件
 
-int nowTime;    //现在已经有多少个被成功ack了，用于判断何时停止
+int nowTime=0;    //现在已经有多少个被成功ack了，用于判断何时停止
 int sendTimes;  //这个文件需要发送多少次
 
 void setPort();
@@ -205,7 +205,7 @@ public:
             sendGrid[15].state=0;//最右边的格子重新空闲
             sendGrid[15].seq=sendGrid[14].seq+1;
             ccout<<"我移动了窗口！"<<endl;
-            // printWindow();
+            printWindow();
             cout<<"现在是发送的第"<<nowTime<<"/"<<sendTimes<<"个包。"<<endl;
             if(nowTime==sendTimes){
                 cout<<"发完了我溜了"<<endl;
@@ -217,7 +217,7 @@ public:
 
                 exit(0);
             }
-            printWindow();
+            // printWindow();
             if(sendGrid[0].state==2)//如果最左侧还是已经ack了，继续move
                 this->move();
         }
@@ -367,9 +367,9 @@ DWORD WINAPI ackReader(LPVOID lpParamter){
         // 收到消息
         int it=recvfrom(sockSrv, recvBuffer, sizeof(recvBuffer), 0, (SOCKADDR*)&addrServer, &len);
         
-        // 当对方发癫
         if(!checkSumIsRight()){
             ccout<<"CheckSum is wrong!"<<endl;
+            continue;
         }
         if(getter.getAckBit(recvBuffer)==false){
             ccout<<"not an ack datagram!"<<endl;
@@ -399,7 +399,7 @@ DWORD WINAPI ackReader(LPVOID lpParamter){
         }
 
         win.sendGrid[i].state=2;//把这个格子的状态位置2
-        // win.printWindow();
+        win.printWindow();
 
         // 没接收到一个看看能不能Move。
         win.move();
@@ -425,15 +425,10 @@ void sendFileDatagram(){
     // 根据文件名读入文件，计算文件长度和sendTimes
     findFile();
 
+    // 用于统计
     t_start=clock();
-    sequenceNumber=0;
 
-    bytesHaveRead=0;    //数据指针
-    bytesHaveWritten=0; //加到bytesHaveSent里面。
-
-    nowTime=0;
-
-
+    // 用于多线程
     HANDLE hThread = CreateThread(NULL, 0, ackReader, NULL, 0, NULL);
     hMutex = CreateMutex(NULL, FALSE,"screen");
     
@@ -442,10 +437,6 @@ void sendFileDatagram(){
     while(1){
 
         // 拿到锁，可以跑一次循环了
-        if(nowTime==sendTimes-1){
-            cout<<"我退出了！"<<endl;
-            return;
-        }
 
         WaitForSingleObject(hMutex, INFINITE);
         ccout<<"==============="<<endl;
