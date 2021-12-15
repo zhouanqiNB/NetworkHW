@@ -39,6 +39,7 @@
 
 #pragma comment(lib, "ws2_32.lib")
 using namespace std;
+const int WINDOW_SIZE=16;
 
 ofstream ccout;
 
@@ -148,19 +149,14 @@ public:
 // 一个窗口大小是16
 class SendWindow{
 public:
-    SendGrid sendGrid[16];
+    SendGrid sendGrid[WINDOW_SIZE];
     // 窗口向右移动1位
     void move(){
         if(sendGrid[0].state==1){//如果最左侧已经ack了，需要写回。
             cout<<"buffer: ";
             printLog(sendGrid[0].buffer);
             // 写数据
-            if(sendGrid[0].seq==0){
-                fileNameLength=getter.getSize(sendGrid[0].buffer);
-            }
-            else{
-                fileNameLength=0;
-            }
+            fileNameLength=(sendGrid[0].seq==0)?getter.getSize(sendGrid[0].buffer):0;
             
             unsigned int bufferSize=getter.getBufferSize(sendGrid[0].buffer);
             fout.write(&sendGrid[0].buffer[HEAD_SIZE+fileNameLength],bufferSize);
@@ -170,20 +166,15 @@ public:
                 fout.close();
             }
 
-            for(int i=1;i<16;i++){
+            for(int i=1;i<WINDOW_SIZE;i++){
                 sendGrid[i-1].state=sendGrid[i].state;
-                sendGrid[i-1].seq=sendGrid[i].seq;
+                sendGrid[i-1].seq++;
                 for(int j=0;j<BUFFER_SIZE;j++){
                     sendGrid[i-1].buffer[j]=sendGrid[i].buffer[j];
                 }
             }
-            sendGrid[15].state=0;//最右边的格子seq++
-            sendGrid[15].seq=sendGrid[14].seq+1;
-            for(int j=0;j<BUFFER_SIZE;j++){
-                sendGrid[15].buffer[j]=0;
-            }
-
-            printWindow();
+            sendGrid[WINDOW_SIZE-1].state=0;//最右边的格子seq++
+            sendGrid[WINDOW_SIZE-1].seq++;
 
             //如果最左侧还是已经ack了，继续move
             this->move();
@@ -191,8 +182,22 @@ public:
     }
     // 用于debug
     void printWindow(){
-        for(int i=0;i<16;i++){
+        for(int i=0;i<WINDOW_SIZE;i++){
+            cout<<"|"<<i<<"\t";
         }
+        cout<<endl;
+        for(int i=0;i<WINDOW_SIZE;i++){
+            cout<<"+-------";
+        }
+        cout<<endl;
+        for(int i=0;i<WINDOW_SIZE;i++){
+            cout<<"|"<<sendGrid[i].state<<"\t";
+        }
+        cout<<endl;
+        for(int i=0;i<WINDOW_SIZE;i++){
+            cout<<"+-------";
+        }
+        cout<<endl;
     }
 } win;
 
@@ -238,21 +243,12 @@ void recvDatagram(){
 
     // 如果是SYN报文#######################################################################
         if(getter.getSynBit(recvBuffer)){
-            
-            //如果校验和没问题就返回一个SYN ACK报文，否则返回空报文
-            if(checkSumIsRight()){
-                for(int i=0;i<16;i++){
+            if(checkSumIsRight()){//如果校验和没问题就返回一个SYN ACK报文，否则返回空报文
+                for(int i=0;i<WINDOW_SIZE;i++){
                     win.sendGrid[i].seq=i;
                     win.sendGrid[i].state=0;
                 }
-                // SYN报文协商起始的序列号。
-                ackNum=getter.getSeqNum(recvBuffer);
-                setAckNum(getter.getSeqNum(recvBuffer));
                 packSynAckDatagram();
-                sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
-            }
-            else{
-                packEmptyDatagram();
                 sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
             }
         }
@@ -261,35 +257,22 @@ void recvDatagram(){
 
     // 如果是普通数据报文###################################################################
         else{
-
+            //返回一个ACK报文+ACK的序列号
             if(checkSumIsRight()){
-                //如果校验和没问题就返回一个ACK报文+序列号
-                //（这里是默认SYN只发一遍，之后的全部都是File）
-
-
                 int i=0;
-                for(;i<16;i++){
-                    // 如果匹配上了
+                for(;i<WINDOW_SIZE;i++){
                     if(getter.getSeqNum(recvBuffer)==win.sendGrid[i].seq){
-
-                        // 如果是第一个，开一下文件
-                        if(getter.getSize(recvBuffer)!=0){
-                            fileName="";
-                            fileNameLength=getter.getSize(recvBuffer);
-
-                            for(int i=0;i<getter.getSize(recvBuffer);i++){
-                                fileName+=recvBuffer[HEAD_SIZE+i];
+                        if(win.sendGrid[i].state==0){//如果没有ack过，需要更改状态之类的
+                            if(getter.getSize(recvBuffer)!=0){// 如果是第一个，开一下文件
+                                fileName="";
+                                fileNameLength=getter.getSize(recvBuffer);
+                                for(int i=0;i<fileNameLength;i++)   fileName+=recvBuffer[HEAD_SIZE+i];
+                                fout.open(fileName,ios_base::out | ios_base::app | ios_base::binary);
                             }
-                            fout.open(fileName,ios_base::out | ios_base::app | ios_base::binary);
 
+                            win.sendGrid[i].state=1;//改变状态
+                            for(int j=0;j<BUFFER_SIZE;j++)  win.sendGrid[i].buffer[j]=recvBuffer[j];
                         }
-
-                        // 1表示已经ack了
-                        win.sendGrid[i].state=1;
-                        for(int j=0;j<BUFFER_SIZE;j++){
-                            win.sendGrid[i].buffer[j]=recvBuffer[j];
-                        }
-                        // win.printWindow();
                         packAckDatagram(getter.getSeqNum(recvBuffer));
                         if(getter.getFinBit(recvBuffer)){//如果收到了fin，挥手。
                             setFinBit(1);
@@ -525,6 +508,5 @@ void printLog(char* sendBuffer){
     cout<<"FIN: "<<getter.getFinBit(sendBuffer)<<", ";
     cout<<"CheckSum: "<<getter.getCheckSum(sendBuffer)<<endl;
 }
-
 
 //##################################### LogPrint #####################################//
