@@ -1,0 +1,152 @@
+listening...
+received.
+Got an SYN datagram!
+Sent SYN ACK.
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是0
+这是第一个包，我要开始写了。
+文件名长度5
+我获取了文件的名称
+fileName: 1.jpg
+got a file
+waitingNum: 1
+sent.
+move
+waitingNum: 0
+bufferSize:12263
+写了包 seq0
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是1
+got a file
+waitingNum: 1
+sent.
+move
+waitingNum: 0
+bufferSize:12268
+写了包 seq1
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是2
+got a file
+waitingNum: 1
+sent.
+move
+waitingNum: 0
+bufferSize:12268
+写了包 seq2
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是3
+got a file
+waitingNum: 1
+sent.
+move
+waitingNum: 0
+bufferSize:12268
+写了包 seq3
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是4
+got a file
+waitingNum: 1
+sent.
+move
+waitingNum: 0
+bufferSize:12268
+写了包 seq4
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是5
+got a file
+waitingNum: 1
+sent.
+move
+waitingNum: 0
+bufferSize:12268
+写了包 seq5
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是6
+got a file
+waitingNum: 1
+sent.
+move
+waitingNum: 0
+bufferSize:12268
+写了包 seq6
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的8,它要的序列号是15
+got a file
+waitingNum: 1
+sent.
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的9,它要的序列号是16
+got a file
+waitingNum: 2
+sent.
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的10,它要的序列号是17
+got a file
+waitingNum: 3
+sent.
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的11,它要的序列号是18
+got a file
+waitingNum: 4
+sent.
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的12,它要的序列号是19
+got a file
+waitingNum: 5
+sent.
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的13,它要的序列号是20
+got a file
+waitingNum: 6
+sent.
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的14,它要的序列号是21
+got a file
+waitingNum: 7
+sent.
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的15,它要的序列号是22
+got a file
+waitingNum: 8
+too much waiting!
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的0,它要的序列号是7
+got a file
+waitingNum: 9
+sent.
+move
+waitingNum: 8
+bufferSize:12268
+写了包 seq7
