@@ -222,7 +222,7 @@ int main(){
     makeSocket();
 
     //初始化窗口
-    for(int i=0;i<16;i++){
+    for(int i=0;i<WINDOW_SIZE;i++){
         win.sendGrid[i].seq=i;
     }
 
@@ -241,7 +241,6 @@ void recvDatagram(){
     while (1){
         recvfrom(sockSrv, recvBuffer, sizeof(recvBuffer), 0, (SOCKADDR*)&addrClient, &len);
 
-    // 如果是SYN报文#######################################################################
         if(getter.getSynBit(recvBuffer)){
             if(checkSumIsRight()){//如果校验和没问题就返回一个SYN ACK报文，否则返回空报文
                 for(int i=0;i<WINDOW_SIZE;i++){
@@ -252,10 +251,6 @@ void recvDatagram(){
                 sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
             }
         }
-    // 如果是SYN报文#######################################################################
-
-
-    // 如果是普通数据报文###################################################################
         else{
             if(!checkSumIsRight()) continue;
 
@@ -284,7 +279,7 @@ void recvDatagram(){
                 break;
             }
             //没匹配上
-            if(i==16){
+            if(i==WINDOW_SIZE){
                 // 如果已经ack过了不在窗口里了，再发一遍
                 if(getter.getSeqNum(recvBuffer)<win.sendGrid[0].seq){
                     packAckDatagram(getter.getSeqNum(recvBuffer));
@@ -298,8 +293,6 @@ void recvDatagram(){
             }
             win.move();
         }
-    // 如果是普通数据报文###################################################################
-    
     }    
 }
 

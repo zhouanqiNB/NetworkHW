@@ -65,7 +65,7 @@
 #pragma comment(lib, "ws2_32.lib")
 using namespace std;
 
-const int WINDOW_SIZE=0x10;
+const int WINDOW_SIZE=16;
 
 ofstream ccout;
 char sendBuffer[BUFFER_SIZE];
