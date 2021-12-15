@@ -43,6 +43,8 @@ const int WINDOW_SIZE=16;
 
 ofstream ccout;
 
+int waitingNum=0;
+
 char sendBuffer[BUFFER_SIZE];
 char recvBuffer[BUFFER_SIZE];
 
@@ -65,6 +67,7 @@ void setSize(int num);
 void setAckBit(char a);
 void setSynBit(char a);
 void setFinBit(char a);
+void setRequestBit(char a);
 unsigned short calCheckSum(unsigned short* buf) ;//计算校验和
 void setCheckSum();
 
@@ -153,6 +156,8 @@ public:
     // 窗口向右移动1位
     void move(){
         if(sendGrid[0].state==1){//如果最左侧已经ack了，需要写回。
+            waitingNum--;
+            cout<<"waitingNum: "<<waitingNum<<"\n";
             cout<<"buffer: ";
             printLog(sendGrid[0].buffer);
             // 写数据
@@ -206,7 +211,6 @@ SOCKET sockSrv;
 SOCKADDR_IN addrSrv;
 SOCKADDR_IN addrClient;   //用来接收客户端的地址信息
 int len;
-
 
 // 用于接收报文
 void recvDatagram();
@@ -268,6 +272,19 @@ void recvDatagram(){
 
                     win.sendGrid[i].state=1;//改变状态
                     for(int j=0;j<BUFFER_SIZE;j++)  win.sendGrid[i].buffer[j]=recvBuffer[j];
+
+                    waitingNum++;
+                    cout<<"waitingNum: "<<waitingNum<<"\n";
+
+                }
+                if(waitingNum>=WINDOW_SIZE/2){
+                    setRequestBit(1);
+                    setSeqNum(win.sendGrid[0].seq);
+                    setCheckSum();
+                    sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
+                    setRequestBit(0);
+                    setSeqNum(0);
+                    cout<<"已经请求重传"<<win.sendGrid[0].seq<<"了\n";
                 }
                 packAckDatagram(getter.getSeqNum(recvBuffer));
                 if(getter.getFinBit(recvBuffer)){//如果收到了fin，挥手。
@@ -305,7 +322,7 @@ void makeSocket(){
     // SOCKADDR_IN addrSrv;
     addrSrv.sin_addr.s_addr = inet_addr("127.0.0.1");//输入你想通信的她（此处是本机内部）
     addrSrv.sin_family = AF_INET;
-    addrSrv.sin_port = htons(1366);
+    addrSrv.sin_port = htons(1266);
 
     //绑定套接字, 绑定到端口
     bind(sockSrv, (SOCKADDR*)&addrSrv, sizeof(SOCKADDR));//会返回一个SOCKET_ERROR
@@ -389,7 +406,21 @@ void setFinBit(char a){
         sendBuffer[13] |=0x01;
     }
 }
-
+void setRequestBit(char a){
+/*
+ * +---------+--+-+-+-+-+-+-+------------------------+
+ * |  size   |  |R|A|P|R|S|F|       checkSum         |
+ * +---------+--+-+-+-+-+-+-+------------------------+
+ */
+    if(a==0){
+        // 1101 1111
+        sendBuffer[13] &=0xdf;
+    }
+    else{
+        // 0010 0000
+        sendBuffer[13] |=0x20;
+    }
+}
 //##################################### Setters #####################################//
 
 

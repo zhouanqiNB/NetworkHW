@@ -86,156 +86,67 @@ bufferSize:12268
 received.
 
 这是一个文件报文!
-匹配上了我们窗口里的9,它要的序列号是16
+匹配上了我们窗口里的8,它要的序列号是15
 got a file
 waitingNum: 1
 sent.
 received.
 
 这是一个文件报文!
-匹配上了我们窗口里的10,它要的序列号是17
+匹配上了我们窗口里的9,它要的序列号是16
 got a file
 waitingNum: 2
 sent.
 received.
 
 这是一个文件报文!
-匹配上了我们窗口里的11,它要的序列号是18
+匹配上了我们窗口里的10,它要的序列号是17
 got a file
 waitingNum: 3
 sent.
 received.
 
 这是一个文件报文!
-匹配上了我们窗口里的12,它要的序列号是19
+匹配上了我们窗口里的11,它要的序列号是18
 got a file
 waitingNum: 4
 sent.
 received.
 
 这是一个文件报文!
-匹配上了我们窗口里的13,它要的序列号是20
+匹配上了我们窗口里的12,它要的序列号是19
 got a file
 waitingNum: 5
 sent.
 received.
 
 这是一个文件报文!
-匹配上了我们窗口里的14,它要的序列号是21
+匹配上了我们窗口里的13,它要的序列号是20
 got a file
 waitingNum: 6
 sent.
 received.
 
 这是一个文件报文!
-匹配上了我们窗口里的15,它要的序列号是22
+匹配上了我们窗口里的14,它要的序列号是21
 got a file
 waitingNum: 7
 sent.
+received.
+
+这是一个文件报文!
+匹配上了我们窗口里的15,它要的序列号是22
+got a file
+waitingNum: 8
+too much waiting!
 received.
 
 这是一个文件报文!
 匹配上了我们窗口里的0,它要的序列号是7
 got a file
-waitingNum: 8
+waitingNum: 9
 sent.
 move
-waitingNum: 7
+waitingNum: 8
 bufferSize:12268
 写了包 seq7
-received.
-
-这是一个文件报文!
-匹配上了我们窗口里的0,它要的序列号是8
-got a file
-waitingNum: 8
-sent.
-move
-waitingNum: 7
-bufferSize:12268
-写了包 seq8
-received.
-
-这是一个文件报文!
-匹配上了我们窗口里的0,它要的序列号是9
-got a file
-waitingNum: 8
-sent.
-move
-waitingNum: 7
-bufferSize:12268
-写了包 seq9
-received.
-
-这是一个文件报文!
-匹配上了我们窗口里的13,它要的序列号是23
-got a file
-waitingNum: 8
-too much waiting!
-received.
-
-这是一个文件报文!
-匹配上了我们窗口里的2,它要的序列号是12
-got a file
-waitingNum: 9
-too much waiting!
-received.
-
-这是一个文件报文!
-匹配上了我们窗口里的3,它要的序列号是13
-got a file
-waitingNum: 10
-too much waiting!
-received.
-
-这是一个文件报文!
-匹配上了我们窗口里的4,它要的序列号是14
-got a file
-waitingNum: 11
-too much waiting!
-received.
-
-这是一个文件报文!
-匹配上了我们窗口里的5,它要的序列号是15
-got a file
-waitingNum: 12
-too much waiting!
-received.
-
-这是一个文件报文!
-sent.
-received.
-
-这是一个文件报文!
-sent.
-received.
-
-这是一个文件报文!
-匹配上了我们窗口里的0,它要的序列号是10
-got a file
-waitingNum: 13
-sent.
-move
-waitingNum: 12
-bufferSize:12268
-写了包 seq10
-received.
-
-这是一个文件报文!
-left of the window.
-sent.
-received.
-
-这是一个文件报文!
-left of the window.
-sent.
-received.
-
-这是一个文件报文!
-left of the window.
-sent.
-received.
-
-这是一个文件报文!
-left of the window.
-sent.

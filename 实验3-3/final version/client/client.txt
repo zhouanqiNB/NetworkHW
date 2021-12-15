@@ -216,6 +216,28 @@ ackreader释放了锁
 发送了22
 ===============
 ackreader拿到了锁
+recvBuffer: SeqNum: 0, AckNum: 15, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58954
+number 0 state: 1, seq: 7
+number 1 state: 1, seq: 8
+number 2 state: 1, seq: 9
+number 3 state: 1, seq: 10
+number 4 state: 1, seq: 11
+number 5 state: 1, seq: 12
+number 6 state: 1, seq: 13
+number 7 state: 1, seq: 14
+number 8 state: 2, seq: 15
+number 9 state: 1, seq: 16
+number 10 state: 1, seq: 17
+number 11 state: 1, seq: 18
+number 12 state: 1, seq: 19
+number 13 state: 1, seq: 20
+number 14 state: 1, seq: 21
+number 15 state: 1, seq: 22
+
+ackreader释放了锁
+===============
+===============
+ackreader拿到了锁
 recvBuffer: SeqNum: 0, AckNum: 16, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58953
 number 0 state: 1, seq: 7
 number 1 state: 1, seq: 8
@@ -225,7 +247,7 @@ number 4 state: 1, seq: 11
 number 5 state: 1, seq: 12
 number 6 state: 1, seq: 13
 number 7 state: 1, seq: 14
-number 8 state: 1, seq: 15
+number 8 state: 2, seq: 15
 number 9 state: 2, seq: 16
 number 10 state: 1, seq: 17
 number 11 state: 1, seq: 18
@@ -247,7 +269,7 @@ number 4 state: 1, seq: 11
 number 5 state: 1, seq: 12
 number 6 state: 1, seq: 13
 number 7 state: 1, seq: 14
-number 8 state: 1, seq: 15
+number 8 state: 2, seq: 15
 number 9 state: 2, seq: 16
 number 10 state: 2, seq: 17
 number 11 state: 1, seq: 18
@@ -269,7 +291,7 @@ number 4 state: 1, seq: 11
 number 5 state: 1, seq: 12
 number 6 state: 1, seq: 13
 number 7 state: 1, seq: 14
-number 8 state: 1, seq: 15
+number 8 state: 2, seq: 15
 number 9 state: 2, seq: 16
 number 10 state: 2, seq: 17
 number 11 state: 2, seq: 18
@@ -291,34 +313,12 @@ number 4 state: 1, seq: 11
 number 5 state: 1, seq: 12
 number 6 state: 1, seq: 13
 number 7 state: 1, seq: 14
-number 8 state: 1, seq: 15
+number 8 state: 2, seq: 15
 number 9 state: 2, seq: 16
 number 10 state: 2, seq: 17
 number 11 state: 2, seq: 18
 number 12 state: 2, seq: 19
 number 13 state: 1, seq: 20
-number 14 state: 1, seq: 21
-number 15 state: 1, seq: 22
-
-ackreader释放了锁
-===============
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 20, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58949
-number 0 state: 1, seq: 7
-number 1 state: 1, seq: 8
-number 2 state: 1, seq: 9
-number 3 state: 1, seq: 10
-number 4 state: 1, seq: 11
-number 5 state: 1, seq: 12
-number 6 state: 1, seq: 13
-number 7 state: 1, seq: 14
-number 8 state: 1, seq: 15
-number 9 state: 2, seq: 16
-number 10 state: 2, seq: 17
-number 11 state: 2, seq: 18
-number 12 state: 2, seq: 19
-number 13 state: 2, seq: 20
 number 14 state: 1, seq: 21
 number 15 state: 1, seq: 22
 
@@ -335,12 +335,12 @@ number 4 state: 1, seq: 11
 number 5 state: 1, seq: 12
 number 6 state: 1, seq: 13
 number 7 state: 1, seq: 14
-number 8 state: 1, seq: 15
+number 8 state: 2, seq: 15
 number 9 state: 2, seq: 16
 number 10 state: 2, seq: 17
 number 11 state: 2, seq: 18
 number 12 state: 2, seq: 19
-number 13 state: 2, seq: 20
+number 13 state: 1, seq: 20
 number 14 state: 2, seq: 21
 number 15 state: 1, seq: 22
 
@@ -348,40 +348,8 @@ ackreader释放了锁
 ===============
 ===============
 ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 22, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58947
-number 0 state: 1, seq: 7
-number 1 state: 1, seq: 8
-number 2 state: 1, seq: 9
-number 3 state: 1, seq: 10
-number 4 state: 1, seq: 11
-number 5 state: 1, seq: 12
-number 6 state: 1, seq: 13
-number 7 state: 1, seq: 14
-number 8 state: 1, seq: 15
-number 9 state: 2, seq: 16
-number 10 state: 2, seq: 17
-number 11 state: 2, seq: 18
-number 12 state: 2, seq: 19
-number 13 state: 2, seq: 20
-number 14 state: 2, seq: 21
-number 15 state: 2, seq: 22
-
-ackreader释放了锁
-===============
-+-----------------------------------------------------------+
-| Over RTO. The server did not respond us, will send again. |
-+-----------------------------------------------------------+
+recvBuffer: SeqNum: 7, AckNum: 21, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 50749
 sendBuffer: SeqNum: 7, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50791
-23 resent.
-+-----------------------------------------------------------+
-| Over RTO. The server did not respond us, will send again. |
-+-----------------------------------------------------------+
-sendBuffer: SeqNum: 8, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50790
-23 resent.
-+-----------------------------------------------------------+
-| Over RTO. The server did not respond us, will send again. |
-+-----------------------------------------------------------+
-sendBuffer: SeqNum: 9, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50789
 23 resent.
 ===============
 ackreader拿到了锁
@@ -394,211 +362,19 @@ number 4 state: 1, seq: 11
 number 5 state: 1, seq: 12
 number 6 state: 1, seq: 13
 number 7 state: 1, seq: 14
-number 8 state: 1, seq: 15
+number 8 state: 2, seq: 15
 number 9 state: 2, seq: 16
 number 10 state: 2, seq: 17
 number 11 state: 2, seq: 18
 number 12 state: 2, seq: 19
-number 13 state: 2, seq: 20
+number 13 state: 1, seq: 20
 number 14 state: 2, seq: 21
-number 15 state: 2, seq: 22
+number 15 state: 1, seq: 22
 
 是时候移动窗口了！
 现在是发送的第8/152个包。
 ackreader释放了锁
 ===============
-12268
-发送了23
 ===============
 ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 8, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58961
-number 0 state: 2, seq: 8
-number 1 state: 1, seq: 9
-number 2 state: 1, seq: 10
-number 3 state: 1, seq: 11
-number 4 state: 1, seq: 12
-number 5 state: 1, seq: 13
-number 6 state: 1, seq: 14
-number 7 state: 1, seq: 15
-number 8 state: 2, seq: 16
-number 9 state: 2, seq: 17
-number 10 state: 2, seq: 18
-number 11 state: 2, seq: 19
-number 12 state: 2, seq: 20
-number 13 state: 2, seq: 21
-number 14 state: 2, seq: 22
-number 15 state: 1, seq: 23
-
-是时候移动窗口了！
-现在是发送的第9/152个包。
-ackreader释放了锁
-===============
-+-----------------------------------------------------------+
-| Over RTO. The server did not respond us, will send again. |
-+-----------------------------------------------------------+
-sendBuffer: SeqNum: 12, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50786
-24 resent.
-+-----------------------------------------------------------+
-| Over RTO. The server did not respond us, will send again. |
-+-----------------------------------------------------------+
-sendBuffer: SeqNum: 13, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50785
-24 resent.
-+-----------------------------------------------------------+
-| Over RTO. The server did not respond us, will send again. |
-+-----------------------------------------------------------+
-sendBuffer: SeqNum: 14, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50784
-24 resent.
-+-----------------------------------------------------------+
-| Over RTO. The server did not respond us, will send again. |
-+-----------------------------------------------------------+
-sendBuffer: SeqNum: 15, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50783
-24 resent.
-+-----------------------------------------------------------+
-| Over RTO. The server did not respond us, will send again. |
-+-----------------------------------------------------------+
-sendBuffer: SeqNum: 23, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50775
-24 resent.
-12268
-发送了24
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 9, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58960
-number 0 state: 2, seq: 9
-number 1 state: 1, seq: 10
-number 2 state: 1, seq: 11
-number 3 state: 1, seq: 12
-number 4 state: 1, seq: 13
-number 5 state: 1, seq: 14
-number 6 state: 1, seq: 15
-number 7 state: 2, seq: 16
-number 8 state: 2, seq: 17
-number 9 state: 2, seq: 18
-number 10 state: 2, seq: 19
-number 11 state: 2, seq: 20
-number 12 state: 2, seq: 21
-number 13 state: 2, seq: 22
-number 14 state: 1, seq: 23
-number 15 state: 1, seq: 24
-
-是时候移动窗口了！
-现在是发送的第10/152个包。
-ackreader释放了锁
-===============
-+-----------------------------------------------------------+
-| Over RTO. The server did not respond us, will send again. |
-+-----------------------------------------------------------+
-sendBuffer: SeqNum: 23, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50775
-25 resent.
-12268
-发送了25
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 10, AckNum: 9, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 50758
-sendBuffer: SeqNum: 10, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50788
-26 resent.
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 10, AckNum: 9, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 50758
-sendBuffer: SeqNum: 10, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50788
-26 resent.
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 10, AckNum: 9, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 50758
-sendBuffer: SeqNum: 10, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50788
-26 resent.
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 10, AckNum: 9, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 50758
-sendBuffer: SeqNum: 10, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50788
-26 resent.
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 10, AckNum: 9, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 50758
-sendBuffer: SeqNum: 10, AckNum: 0, Size: 0, SYN: 0, ACK: 0, FIN: 0, CheckSum: 50788
-26 resent.
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 23, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58946
-number 0 state: 1, seq: 10
-number 1 state: 1, seq: 11
-number 2 state: 1, seq: 12
-number 3 state: 1, seq: 13
-number 4 state: 1, seq: 14
-number 5 state: 1, seq: 15
-number 6 state: 2, seq: 16
-number 7 state: 2, seq: 17
-number 8 state: 2, seq: 18
-number 9 state: 2, seq: 19
-number 10 state: 2, seq: 20
-number 11 state: 2, seq: 21
-number 12 state: 2, seq: 22
-number 13 state: 2, seq: 23
-number 14 state: 1, seq: 24
-number 15 state: 1, seq: 25
-
-ackreader释放了锁
-===============
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 23, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58946
-number 0 state: 1, seq: 10
-number 1 state: 1, seq: 11
-number 2 state: 1, seq: 12
-number 3 state: 1, seq: 13
-number 4 state: 1, seq: 14
-number 5 state: 1, seq: 15
-number 6 state: 2, seq: 16
-number 7 state: 2, seq: 17
-number 8 state: 2, seq: 18
-number 9 state: 2, seq: 19
-number 10 state: 2, seq: 20
-number 11 state: 2, seq: 21
-number 12 state: 2, seq: 22
-number 13 state: 2, seq: 23
-number 14 state: 1, seq: 24
-number 15 state: 1, seq: 25
-
-ackreader释放了锁
-===============
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 10, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58959
-number 0 state: 2, seq: 10
-number 1 state: 1, seq: 11
-number 2 state: 1, seq: 12
-number 3 state: 1, seq: 13
-number 4 state: 1, seq: 14
-number 5 state: 1, seq: 15
-number 6 state: 2, seq: 16
-number 7 state: 2, seq: 17
-number 8 state: 2, seq: 18
-number 9 state: 2, seq: 19
-number 10 state: 2, seq: 20
-number 11 state: 2, seq: 21
-number 12 state: 2, seq: 22
-number 13 state: 2, seq: 23
-number 14 state: 1, seq: 24
-number 15 state: 1, seq: 25
-
-是时候移动窗口了！
-现在是发送的第11/152个包。
-ackreader释放了锁
-===============
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 10, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58959
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 10, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58959
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 10, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58959
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 10, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58959
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 10, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58959
-===============
-ackreader拿到了锁
-recvBuffer: SeqNum: 0, AckNum: 10, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58959
+recvBuffer: SeqNum: 0, AckNum: 7, Size: 0, SYN: 0, ACK: 1, FIN: 0, CheckSum: 58962

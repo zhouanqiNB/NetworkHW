@@ -359,18 +359,29 @@ void resendData(int i){
 }
 
 DWORD WINAPI ackReader(LPVOID lpParamter){
-
     while(1){
-        // 收到消息
         int it=recvfrom(sockSrv, recvBuffer, sizeof(recvBuffer), 0, (SOCKADDR*)&addrServer, &len);
         
         if(!checkSumIsRight()) continue;
-        if(getter.getAckBit(recvBuffer)==false) continue;
+        if(!getter.getAckBit(recvBuffer)&&!getter.getRequestBit(recvBuffer)) continue;
 
         WaitForSingleObject(hMutex,INFINITE);
-
-        int i=0;
-        for(;i<WINDOW_SIZE;i++){
+        if(getter.getRequestBit(recvBuffer)){
+            cout<<"对方请求重传！";
+            int seq=getter.getSeqNum(recvBuffer);
+            cout<<seq<<"号"<<endl;
+            int j=0;
+            for(;j<WINDOW_SIZE;j++){
+                if(seq==win.sendGrid[j].seq){
+                    cout<<"匹配上了！"<<endl;
+                    resendData(j);
+                    break;
+                }
+            }
+            ReleaseMutex(hMutex);
+            continue;
+        }
+        for(int i=0;i<WINDOW_SIZE;i++){
             if(getter.getAckNum(recvBuffer)==win.sendGrid[i].seq){
                 win.sendGrid[i].state=2;
                 win.move();

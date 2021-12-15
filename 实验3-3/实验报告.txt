@@ -16,7 +16,7 @@ TCP格式如下，除去非定长的options共20Byte：
 
 <img src="C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C3-3/image-20211211030019393.png" alt="image-20211211030019393" style="zoom:67%;" />
 
-在==本次实验==中，我添加了一种“请求重传报文”，在上图中U的位置，我称之为Request位。为了配合，我写了相应的setter和getter
+在==本次实验==中，我添加了一种“请求重传报文”，在上图中`U`的位置，我称之为Request位。为了配合，我写了相应的setter和getter
 
 在我实现的代码中，发送端的SYN是单独进行的。
 
@@ -720,78 +720,88 @@ int getRequestBit(char* recvBuffer){
 
 ![image-20211215233613228](C:/Users/16834/Desktop/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E4%BD%9C%E4%B8%9A/%E5%AE%9E%E9%AA%8C3-3/image-20211215233613228.png)
 
-代码（有删节）：
+主要对代码做的改动如下：
+
+- 第一次接到某个序列号的包的时候将waitingNum++
+- 每次接到新的包的时候查看waitingNum是否超过半数，如果是，则发送request报文
 
 ```c++
-if(getter.getSynBit(recvBuffer)){
-    //如果是Syn报文
-}
-//普通数据报文
-else{
-    if(!checkSumIsRight())
-        break;
+if(!checkSumIsRight()) continue;
+int i=0;
+//遍历整个接收窗口，看接收的包和它匹不匹配
+for(;i<WINDOW_SIZE;i++){
+    if(getter.getSeqNum(recvBuffer)!=win.sendGrid[i].seq) continue;
+    if(win.sendGrid[i].state==0){
+        if(getter.getSize(recvBuffer)!=0){...}
 
-    int i=0;
-    for(;i<WINDOW_SIZE;i++){
+        win.sendGrid[i].state=1;//改变状态
+        for(int j=0;j<BUFFER_SIZE;j++) 
+            win.sendGrid[i].buffer[j]=recvBuffer[j];
+		
+        //##################################################
+        waitingNum++;
+        cout<<"waitingNum: "<<waitingNum<<"\n";
 
-        // 如果没匹配上
-        if(getter.getSeqNum(recvBuffer)!=win.sendGrid[i].seq)   continue;
-        // 匹配上了且还没有ack，如果已经ack了不需要做这些
-        if(win.sendGrid[i].state==0){
-			//.....
-            //.....
-            
-            win.sendGrid[i].state=1;
-            waitingNum++;
-            // 如果匹配上的不是第一个而且等在窗口中的超过半数，那么请求重传
-            if(i!=0 && waitingNum>=WINDOW_SIZE/2){
-                ccout<<"too much waiting!"<<endl;
-                setRequestBit(1);	//设置request报文
-                setSeqNum(win.sendGrid[0].seq);	//设置请求的序列号
-                setCheckSum();			//计算校验和
-                sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0,
-                       (sockaddr*)&addrClient, len);
-
-                setRequestBit(0);	//发完把request位清零
-                setSeqNum(0);
-                break;
-            }
-            for(int j=0;j<BUFFER_SIZE;j++) //存到buffer里
-                win.sendGrid[i].buffer[j]=recvBuffer[j];
-        }
+        //###################################################
     }
-    //没匹配上的略去
-    win.move();
+    //###################################################
+    if(waitingNum>=WINDOW_SIZE/2){
+        setRequestBit(1);
+        setSeqNum(win.sendGrid[0].seq);
+        setCheckSum();
+        sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, 
+               (sockaddr*)&addrClient, len);
+        setRequestBit(0);
+        setSeqNum(0);
+        cout<<"已经请求重传"<<win.sendGrid[0].seq<<"了\n";
+    }
+    //###################################################
+    packAckDatagram(getter.getSeqNum(recvBuffer));
+    if(getter.getFinBit(recvBuffer)){//如果收到了fin，挥手。
+        setFinBit(1);
+        setCheckSum();
+    }
+    sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, 
+           (sockaddr*)&addrClient, len);
+    break;
 }
+//没匹配上
+if(i==WINDOW_SIZE){...}
+win.move();
 ```
 
 #### client.cpp
 
 我在接收端写了两个线程，在上个实验中，ackReader线程的作用只是接收ack并且设置窗口状态，在本次实验中，我为它增加了一个功能，即在受到request报文的时候立刻重传。
 
+其中resendData(i)函数是直接重传窗口i所带的buffer。
+
 代码如下：
 
 ```c++
+WaitForSingleObject(hMutex,INFINITE);
 if(getter.getRequestBit(recvBuffer)){
+    cout<<"对方请求重传！";
     int seq=getter.getSeqNum(recvBuffer);
-    cout<<"对方要求重传seq:"<<seq<<endl;
-    int i=0;
-    for(;i<WINDOW_SIZE;i++){
-        cout<<i<<":"<<win.sendGrid[i].seq<<endl;
-        if(win.sendGrid[i].seq==seq){
+    cout<<seq<<"号"<<endl;
+    int j=0;
+    for(;j<WINDOW_SIZE;j++){
+        if(seq==win.sendGrid[j].seq){
+            cout<<"匹配上了！"<<endl;
+            resendData(j);
             break;
         }
     }
-    if(i!=WINDOW_SIZE){
-        resendData(i);
-    }
+    ReleaseMutex(hMutex);
     continue;
 }
+...
+ReleaseMutex(hMutex);
 ```
 
 ## 4 实验输出和对比
 
-由于3-1我只是实现了停等机制，所以在丢包的情况下其实会陷入死循环，所以不参与对比，这里只对3-2和3-3做对比。预计在3-4我会给3-1增添超时重传然后再做全面的对比。
+由于3-1我只是实现了停等机制，所以在丢包的情况下其实会陷入死循环，所以不参与对比，这里只对3-2和3-3做对比。在3-4，我会给3-1增添超时重传然后再做全面的对比。
 
 
 

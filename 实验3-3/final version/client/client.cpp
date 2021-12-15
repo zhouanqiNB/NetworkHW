@@ -376,7 +376,7 @@ DWORD WINAPI ackReader(LPVOID lpParamter){
             continue;
         }
 
-        if(getter.getAckBit(recvBuffer)==false){
+        if(!getter.getAckBit(recvBuffer)&&!getter.getRequestBit(recvBuffer)){
             // ccout<<"not an ack datagram!"<<endl;
             continue;
         }
