@@ -257,56 +257,46 @@ void recvDatagram(){
 
     // 如果是普通数据报文###################################################################
         else{
+            if(!checkSumIsRight()) continue;
+
             //返回一个ACK报文+ACK的序列号
-            if(checkSumIsRight()){
-                int i=0;
-                for(;i<WINDOW_SIZE;i++){
-                    if(getter.getSeqNum(recvBuffer)==win.sendGrid[i].seq){
-                        if(win.sendGrid[i].state==0){//如果没有ack过，需要更改状态之类的
-                            if(getter.getSize(recvBuffer)!=0){// 如果是第一个，开一下文件
-                                fileName="";
-                                fileNameLength=getter.getSize(recvBuffer);
-                                for(int i=0;i<fileNameLength;i++)   fileName+=recvBuffer[HEAD_SIZE+i];
-                                fout.open(fileName,ios_base::out | ios_base::app | ios_base::binary);
-                            }
-
-                            win.sendGrid[i].state=1;//改变状态
-                            for(int j=0;j<BUFFER_SIZE;j++)  win.sendGrid[i].buffer[j]=recvBuffer[j];
-                        }
-                        packAckDatagram(getter.getSeqNum(recvBuffer));
-                        if(getter.getFinBit(recvBuffer)){//如果收到了fin，挥手。
-                            setFinBit(1);
-                            setCheckSum();
-                        }
-                        sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
-
-                        break;
+            int i=0;
+            for(;i<WINDOW_SIZE;i++){
+                if(getter.getSeqNum(recvBuffer)!=win.sendGrid[i].seq) continue;
+                if(win.sendGrid[i].state==0){//如果没有ack过，需要更改状态之类的
+                    if(getter.getSize(recvBuffer)!=0){// 如果是第一个，开一下文件
+                        fileName="";
+                        fileNameLength=getter.getSize(recvBuffer);
+                        for(int i=0;i<fileNameLength;i++)   fileName+=recvBuffer[HEAD_SIZE+i];
+                        fout.open(fileName,ios_base::out | ios_base::app | ios_base::binary);
                     }
+
+                    win.sendGrid[i].state=1;//改变状态
+                    for(int j=0;j<BUFFER_SIZE;j++)  win.sendGrid[i].buffer[j]=recvBuffer[j];
                 }
-                //没匹配上
-                if(i==16){
-                    // 如果已经ack过了不在窗口里了，再发一遍
-                    if(getter.getSeqNum(recvBuffer)<win.sendGrid[0].seq){
-                        packAckDatagram(getter.getSeqNum(recvBuffer));
-                        if(getter.getFinBit(recvBuffer)){//如果收到了fin，挥手。
-                            setFinBit(1);
-                            setCheckSum();
-                            fout.close();
-                        }
-                        sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
-                        continue;
-                    }
-                    // 这个包对我而言为时过早了啊
-                    if(getter.getSeqNum(recvBuffer)>win.sendGrid[15].seq){
-                        continue;
-                    }
-
+                packAckDatagram(getter.getSeqNum(recvBuffer));
+                if(getter.getFinBit(recvBuffer)){//如果收到了fin，挥手。
+                    setFinBit(1);
+                    setCheckSum();
                 }
-                win.move();
-            }
+                sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
 
-            else{
+                break;
             }
+            //没匹配上
+            if(i==16){
+                // 如果已经ack过了不在窗口里了，再发一遍
+                if(getter.getSeqNum(recvBuffer)<win.sendGrid[0].seq){
+                    packAckDatagram(getter.getSeqNum(recvBuffer));
+                    if(getter.getFinBit(recvBuffer)){//如果收到了fin，挥手。
+                        setFinBit(1);
+                        setCheckSum();
+                    }
+                    sendto(sockSrv, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&addrClient, len);
+                }
+                continue;// 在右边、这个包对我而言为时过早了啊
+            }
+            win.move();
         }
     // 如果是普通数据报文###################################################################
     
