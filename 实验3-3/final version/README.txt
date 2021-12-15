@@ -1,1 +1,6 @@
-我把我的命令行改成utf-8编码了，所以好像这个程序会出乱码……在展示的时候会演示。
+g++ -std=c++11 client.cpp -o client.exe -lws2_32
+g++ -std=c++11 server.cpp -o server.exe -lws2_32
+
+
+client.exe
+server.exe
