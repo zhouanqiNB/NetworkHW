@@ -364,41 +364,20 @@ DWORD WINAPI ackReader(LPVOID lpParamter){
         // 收到消息
         int it=recvfrom(sockSrv, recvBuffer, sizeof(recvBuffer), 0, (SOCKADDR*)&addrServer, &len);
         
-        if(!checkSumIsRight()){
-            continue;
-        }
-        if(getter.getAckBit(recvBuffer)==false){
-            continue;
-        }
+        if(!checkSumIsRight()) continue;
+        if(getter.getAckBit(recvBuffer)==false) continue;
 
         WaitForSingleObject(hMutex,INFINITE);
 
         int i=0;
         for(;i<WINDOW_SIZE;i++){
-            // 如果匹配上了
             if(getter.getAckNum(recvBuffer)==win.sendGrid[i].seq){
+                win.sendGrid[i].state=2;
+                win.move();
                 break;
             }
         }
-        // 说明一个都没匹配上
-        if(i==WINDOW_SIZE){
-            ReleaseMutex(hMutex);
-            continue;
-        }
-
-        win.sendGrid[i].state=2;//把这个格子的状态位置2
-        // win.printWindow();
-
-        // 没接收到一个看看能不能Move。
-        win.move();
-
-        // if(nowTime==sendTimes){
-        //     ReleaseMutex(hMutex);
-        //     return 0L;//表示返回的是long型的0
-
-        // }
         ReleaseMutex(hMutex);
-
     }
 }
 
