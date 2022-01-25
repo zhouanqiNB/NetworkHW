@@ -199,6 +199,7 @@ public:
         if(sendGrid[0].state==2){//如果最左侧是不是已经ack了
             cout<<"buffer: ";
             printLog(sendGrid[0].buffer);
+            printWindow();
             for(int i=1;i<WINDOW_SIZE;i++){
                 sendGrid[i-1].state=sendGrid[i].state;
                 sendGrid[i-1].seq++;
@@ -209,7 +210,7 @@ public:
             }
             sendGrid[WINDOW_SIZE-1].state=0;//最右边的格子重新空闲
             sendGrid[WINDOW_SIZE-1].seq++;
-            // printWindow();
+            printWindow();
             if(sendGrid[0].seq==sendTimes){
                 int t=clock()-t_start;
                 cout<<"发送的字节数："<<bytesHaveSent<<".\n";
